@@ -12,7 +12,7 @@ import sys
 import json
 import urllib.parse
 from pathlib import Path
-from database import init_db, add_palpite, get_all_palpites, get_stats, clear_all_palpites
+from database import init_db, add_palpite, get_all_palpites, get_stats, clear_all_palpites, get_ganhador
 
 # Porta padrão
 PORT = 8000
@@ -118,6 +118,10 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
         """Retorna estatísticas dos palpites"""
         try:
             stats = get_stats()
+            # Adiciona informações do ganhador nas estatísticas
+            ganhador = get_ganhador()
+            if ganhador:
+                stats['ganhador_info'] = ganhador
             self.send_json_response(200, stats)
         except (ConnectionResetError, BrokenPipeError, OSError) as e:
             # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
@@ -166,6 +170,14 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                     pass
                 return
             
+            # Verifica se é o 10º palpite (ganhador)
+            print(f"🔍 Verificando se é ganhador... [{time.time() - start_time:.2f}s]")
+            total_palpites = len(get_all_palpites())
+            eh_ganhador = (total_palpites + 1) == 10  # +1 porque vamos adicionar este
+            
+            if eh_ganhador:
+                print(f"🎉 Este é o 10º palpite! {data['nome']} é o ganhador!")
+            
             # Adiciona o palpite
             print(f"💾 Salvando no banco de dados... [{time.time() - start_time:.2f}s]")
             palpite_id = add_palpite(
@@ -173,7 +185,8 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 sexo=data['sexo'],
                 mensagem=data['mensagem'],
                 data_palpite=data['dataPalpite'],
-                sugestao_nome=data.get('sugestaoNome')
+                sugestao_nome=data.get('sugestaoNome'),
+                eh_ganhador=eh_ganhador
             )
             
             elapsed = time.time() - start_time
