@@ -1,7 +1,7 @@
 // Função auxiliar para obter palpites (fallback se script.js não carregou)
 function getPalpitesLocal() {
     try {
-        const palpites = localStorage.getItem('palpites');
+        const palpites = localStorage.getItem('arvore_palpites');
         return palpites ? JSON.parse(palpites) : [];
     } catch (e) {
         console.error('Erro ao ler palpites:', e);

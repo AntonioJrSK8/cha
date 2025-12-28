@@ -6,6 +6,33 @@ const PIX_NAME = 'ANTONIO JUNIO'; // Nome que aparecerá no QR Code
 // Configuração de exibição do QR Code
 const SHOW_QRCODE = false; // Altere para false se não quiser exibir o QR Code
 
+// Detecção de ambiente: GitHub Pages ou servidor local
+const STORAGE_KEY = 'arvore_palpites';
+const isGitHubPages = window.location.hostname.includes('github.io') || 
+                      window.location.hostname.includes('github.com') ||
+                      window.location.protocol === 'file:';
+
+// Função auxiliar para detectar se a API está disponível
+async function isAPIAvailable() {
+    if (isGitHubPages) return false;
+    
+    try {
+        // Cria um timeout manual para melhor compatibilidade
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const response = await fetch('/api/palpites', {
+            method: 'GET',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeForm();
@@ -69,43 +96,98 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Salva o palpite no servidor (SQLite)
+// Salva o palpite no servidor (SQLite) ou localStorage (fallback)
 async function savePalpite(palpite) {
-    try {
-        const response = await fetch('/api/palpites', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(palpite)
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Erro ao salvar palpite');
+    // Verifica se a API está disponível
+    const apiAvailable = await isAPIAvailable();
+    
+    if (apiAvailable) {
+        try {
+            const response = await fetch('/api/palpites', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(palpite)
+            });
+            
+            if (!response.ok) {
+                throw new Error('API retornou erro');
+            }
+            
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.warn('API não disponível, usando localStorage:', error);
+            // Fallback para localStorage
+            return savePalpiteLocalStorage(palpite);
         }
-        
-        const result = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Erro ao salvar palpite:', error);
-        throw error;
+    } else {
+        // Usa localStorage diretamente
+        return savePalpiteLocalStorage(palpite);
     }
 }
 
-// Obtém todos os palpites do servidor (SQLite)
-async function getPalpites() {
+// Salva palpite no localStorage
+function savePalpiteLocalStorage(palpite) {
     try {
-        const response = await fetch('/api/palpites');
+        // Obtém palpites existentes
+        const palpites = getPalpitesLocalStorage();
         
-        if (!response.ok) {
-            throw new Error('Erro ao carregar palpites');
-        }
+        // Adiciona novo palpite com ID único
+        const newPalpite = {
+            ...palpite,
+            id: Date.now(), // Usa timestamp como ID único
+            dataRegistro: new Date().toISOString()
+        };
         
-        const data = await response.json();
-        return data.palpites || [];
+        palpites.push(newPalpite);
+        
+        // Salva no localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(palpites));
+        
+        console.log('Palpite salvo no localStorage:', newPalpite);
+        
+        return { id: newPalpite.id, message: 'Palpite salvo com sucesso' };
     } catch (error) {
-        console.error('Erro ao carregar palpites:', error);
+        console.error('Erro ao salvar no localStorage:', error);
+        throw new Error('Erro ao salvar palpite no navegador');
+    }
+}
+
+// Obtém todos os palpites do servidor (SQLite) ou localStorage (fallback)
+async function getPalpites() {
+    // Verifica se a API está disponível
+    const apiAvailable = await isAPIAvailable();
+    
+    if (apiAvailable) {
+        try {
+            const response = await fetch('/api/palpites');
+            
+            if (!response.ok) {
+                throw new Error('API retornou erro');
+            }
+            
+            const data = await response.json();
+            return data.palpites || [];
+        } catch (error) {
+            console.warn('API não disponível, usando localStorage:', error);
+            // Fallback para localStorage
+            return getPalpitesLocalStorage();
+        }
+    } else {
+        // Usa localStorage diretamente
+        return getPalpitesLocalStorage();
+    }
+}
+
+// Obtém palpites do localStorage
+function getPalpitesLocalStorage() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (error) {
+        console.error('Erro ao ler localStorage:', error);
         return [];
     }
 }
@@ -421,22 +503,42 @@ async function exportPalpites() {
 // Função para limpar todos os palpites (cuidado!)
 async function clearAllPalpites() {
     if (confirm('Tem certeza que deseja apagar todos os palpites? Esta ação não pode ser desfeita.')) {
-        try {
-            const response = await fetch('/api/palpites', {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                throw new Error('Erro ao limpar palpites');
+        // Verifica se a API está disponível
+        const apiAvailable = await isAPIAvailable();
+        
+        if (apiAvailable) {
+            try {
+                const response = await fetch('/api/palpites', {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API retornou erro');
+                }
+            } catch (error) {
+                console.warn('API não disponível, usando localStorage:', error);
+                // Fallback para localStorage
+                clearAllPalpitesLocalStorage();
             }
-            
-            if (window.location.pathname.includes('palpites.html')) {
-                location.reload();
-            }
-        } catch (error) {
-            console.error('Erro ao limpar palpites:', error);
-            alert('Erro ao limpar palpites. Tente novamente.');
+        } else {
+            // Usa localStorage diretamente
+            clearAllPalpitesLocalStorage();
         }
+        
+        if (window.location.pathname.includes('palpites.html')) {
+            location.reload();
+        }
+    }
+}
+
+// Limpa todos os palpites do localStorage
+function clearAllPalpitesLocalStorage() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+        console.log('Todos os palpites foram removidos do localStorage');
+    } catch (error) {
+        console.error('Erro ao limpar localStorage:', error);
+        throw new Error('Erro ao limpar palpites');
     }
 }
 
