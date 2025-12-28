@@ -858,4 +858,21 @@ body {
     }
 }
 
+/* Animação especial para mensagem de ganhador */
+@keyframes winnerPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 12px 40px rgba(255, 215, 0, 0.5);
+    }
+}
 
+/* Estilo para destacar palavra-chave do ganhador */
+.palavra-chave-premio {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}

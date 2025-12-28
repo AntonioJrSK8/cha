@@ -89,11 +89,16 @@ async function handleFormSubmit(e) {
     submitBtn.innerHTML = '<span>⏳</span> Enviando...';
 
     try {
+        // Verifica quantos palpites existem antes de salvar
+        const palpitesExistentes = await getPalpites();
+        const numeroTotal = palpitesExistentes.length + 1; // +1 porque vamos adicionar este
+        const isGanhador = numeroTotal === 10;
+        
         // Salva o palpite no servidor
         await savePalpite(palpite);
 
-        // Mostra mensagem de sucesso
-        showSuccessMessage();
+        // Mostra mensagem de sucesso (com informação se é ganhador)
+        showSuccessMessage(isGanhador);
 
         // Reseta o formulário
         e.target.reset();
@@ -267,7 +272,7 @@ function generatePixCode(chave, nome, valor = null) {
 }
 
 // Mostra mensagem de sucesso com agradecimento e QR Code PIX
-function showSuccessMessage() {
+function showSuccessMessage(isGanhador = false) {
     const successMessage = document.getElementById('successMessage');
     const qrcodeContainer = document.getElementById('qrcodeContainer');
     const qrcodeElement = document.getElementById('qrcode');
@@ -275,13 +280,51 @@ function showSuccessMessage() {
     if (successMessage) {
         // Mostra a mensagem de sucesso
         successMessage.classList.remove('hidden');
-        successMessage.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)';
-        successMessage.style.borderColor = '#4caf50';
         
         // Mensagem de agradecimento
         const messageText = successMessage.querySelector('p');
-        if (messageText) {
-            messageText.innerHTML = '✨ <strong>Obrigado pelo seu palpite!</strong><br>Seu carinho é muito especial para nós! 💚';
+        
+        if (isGanhador) {
+            // Mensagem especial para o ganhador (10º participante)
+            successMessage.style.background = 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%)';
+            successMessage.style.borderColor = '#ffc107';
+            successMessage.style.borderWidth = '3px';
+            successMessage.style.boxShadow = '0 8px 32px rgba(255, 215, 0, 0.3)';
+            
+            if (messageText) {
+                messageText.innerHTML = `
+                    🎉🎉🎉 <strong style="font-size: 1.2em; color: #ff6f00;">PARABÉNS! VOCÊ GANHOU! 🎉🎉🎉</strong><br><br>
+                    <div style="background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 10px; margin: 10px 0; border: 2px solid #ffc107;">
+                        <p style="margin: 0; font-size: 1.1em; color: #333;">
+                            Você foi a <strong style="color: #ff6f00;">10ª pessoa</strong> a fazer um palpite!<br><br>
+                            <strong style="font-size: 1.3em; color: #d32f2f; letter-spacing: 2px;">SUA PALAVRA-CHAVE É:</strong><br>
+                            <span style="font-size: 2em; font-weight: bold; color: #ff6f00; display: block; margin: 10px 0; padding: 10px; background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); border-radius: 8px; border: 3px solid #ffc107;">BRANDAO10</span><br>
+                            <strong style="color: #d32f2f;">🎁 Vale-presente de R$ 100,00</strong> nas lojas <strong>C&A</strong><br><br>
+                            <small style="color: #666;">Guarde esta palavra-chave! Você precisará dela para resgatar seu prêmio.</small>
+                        </p>
+                    </div>
+                    <p style="margin-top: 10px;">✨ Obrigado pelo seu palpite e parabéns pela participação! 💚</p>
+                `;
+            }
+            
+            // Adiciona efeito de pulso especial para ganhador
+            successMessage.style.animation = 'winnerPulse 2s infinite';
+            
+            // Scroll para garantir que o usuário veja a mensagem
+            setTimeout(() => {
+                successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        } else {
+            // Mensagem normal para outros participantes
+            successMessage.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)';
+            successMessage.style.borderColor = '#4caf50';
+            successMessage.style.borderWidth = '';
+            successMessage.style.boxShadow = '';
+            successMessage.style.animation = '';
+            
+            if (messageText) {
+                messageText.innerHTML = '✨ <strong>Obrigado pelo seu palpite!</strong><br>Seu carinho é muito especial para nós! 💚';
+            }
         }
         
         // Gera e exibe o QR Code PIX se a chave estiver configurada e SHOW_QRCODE estiver habilitado
