@@ -131,6 +131,9 @@ async function handleFormSubmit(e) {
             // Continua mesmo se não conseguir verificar (não é crítico)
         }
 
+        // Dispara fogos de artifício (mais intensos se for ganhador)
+        triggerFireworks(isGanhador);
+        
         // Mostra mensagem de sucesso (com informação se é ganhador)
         showSuccessMessage(isGanhador);
 
@@ -346,6 +349,143 @@ function generatePixCode(chave, nome, valor = null) {
     // Para simplificar, vamos usar a chave PIX diretamente
     // Os apps modernos conseguem ler chaves PIX diretamente
     return chave;
+}
+
+// Função para criar efeito de fogos de artifício
+function triggerFireworks(isGanhador = false) {
+    console.log('🎆 Iniciando fogos de artifício!', isGanhador ? '(Ganhador)' : '');
+    
+    // Cria canvas para os fogos de artifício
+    const canvas = document.createElement('canvas');
+    canvas.id = 'fireworksCanvas';
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '9999';
+    document.body.appendChild(canvas);
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Array de partículas de fogos
+    const particles = [];
+    
+    // Cores dos fogos (verde e dourado para combinar com o tema)
+    // Se for ganhador, usa mais cores douradas
+    const colors = isGanhador 
+        ? ['#ffc107', '#ff6f00', '#ffeb3b', '#ff9800', '#ff5722', '#ffd700', '#ffa500']
+        : ['#4caf50', '#2d5016', '#ffc107', '#ff6f00', '#ffffff', '#4a7c2a'];
+    
+    // Cria múltiplos fogos de artifício (mais se for ganhador)
+    const fireworkCount = isGanhador ? 8 : 5;
+    const particleBase = isGanhador ? 50 : 30;
+    let fogosCriados = 0;
+    
+    function createFirework() {
+        // Se for ganhador, alguns fogos aparecem no centro superior (onde está a mensagem)
+        let x, y;
+        if (isGanhador && Math.random() > 0.5) {
+            x = canvas.width / 2 + (Math.random() - 0.5) * 300;
+            y = canvas.height * 0.3 + Math.random() * 100;
+        } else {
+            x = Math.random() * canvas.width;
+            y = Math.random() * (canvas.height * 0.5) + canvas.height * 0.2;
+        }
+        
+        // Cria partículas explosivas
+        const particleCount = particleBase + Math.random() * 50;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const speed = isGanhador ? (3 + Math.random() * 5) : (2 + Math.random() * 4);
+            const velocity = {
+                x: Math.cos(angle) * speed,
+                y: Math.sin(angle) * speed
+            };
+            
+            particles.push({
+                x: x,
+                y: y,
+                vx: velocity.x,
+                vy: velocity.y,
+                life: 1,
+                decay: 0.012 + Math.random() * 0.02,
+                size: isGanhador ? (4 + Math.random() * 5) : (3 + Math.random() * 4),
+                color: color,
+                brightness: 1
+            });
+        }
+        fogosCriados++;
+    }
+    
+    // Função de animação
+    function animate() {
+        // Limpa o canvas com fade (cria efeito de rastro)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Atualiza e desenha partículas
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1; // Gravidade
+            p.life -= p.decay;
+            p.brightness *= 0.98;
+            
+            if (p.life > 0) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                particles.splice(i, 1);
+            }
+        }
+        
+        ctx.globalAlpha = 1;
+        
+        // Continua animação se houver partículas ou se ainda há fogos sendo criados
+        const todosFogosCriados = fogosCriados >= fireworkCount;
+        const aindaHaParticulas = particles.length > 0;
+        
+        if (aindaHaParticulas || !todosFogosCriados) {
+            requestAnimationFrame(animate);
+        } else {
+            // Todos os fogos foram criados e não há mais partículas, remove canvas
+            setTimeout(() => {
+                if (canvas.parentNode) {
+                    canvas.parentNode.removeChild(canvas);
+                }
+            }, 500);
+        }
+    }
+    
+    // Inicia animação imediatamente
+    animate();
+    
+    // Cria os fogos com delay
+    for (let i = 0; i < fireworkCount; i++) {
+        setTimeout(() => {
+            createFirework();
+        }, i * 300);
+    }
+    
+    // Ajusta canvas quando a janela é redimensionada
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
 }
 
 // Mostra mensagem de sucesso com agradecimento e QR Code PIX
