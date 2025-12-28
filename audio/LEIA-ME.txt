@@ -1,0 +1,22 @@
+INSTRUÇÕES PARA ADICIONAR A MÚSICA "AQUARELA"
+
+1. Coloque o arquivo de áudio "Aquarela" nesta pasta com um dos seguintes nomes:
+   - aquarela.mp3 (recomendado - formato mais compatível)
+   - aquarela.ogg (formato alternativo)
+
+2. Formatos suportados:
+   - MP3: Melhor compatibilidade
+   - OGG: Alternativa de código aberto
+
+3. Se você tiver a música em outro formato, converta para MP3 usando:
+   - Ferramentas online: CloudConvert, Online-Convert, etc.
+   - Software: Audacity, VLC Media Player, etc.
+
+4. O player de música aparecerá automaticamente no canto inferior direito do site.
+
+5. A música tocará automaticamente quando a página carregar (se permitido pelo navegador).
+
+6. Os usuários podem clicar no botão 🎵 para pausar/despausar a música.
+
+NOTA: Se o arquivo não for encontrado, o botão de música será ocultado automaticamente.
+

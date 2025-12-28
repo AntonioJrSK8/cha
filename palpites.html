@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palpites Recebidos - Árvore dos Palpites</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="tree-icon">🌳</div>
+            <h1 class="title">Palpites Recebidos</h1>
+            <p class="subtitle">Todos os desejos e expectativas</p>
+        </header>
+
+        <main class="main-content">
+            <a href="index.html" class="back-btn">
+                ← Voltar ao Formulário
+            </a>
+
+            <div id="statsContainer" class="stats-info">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalPalpites">0</span>
+                    <span class="stat-label">Total de Palpites</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalMeninas">0</span>
+                    <span class="stat-label">Palpites: Menina</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="totalMeninos">0</span>
+                    <span class="stat-label">Palpites: Menino</span>
+                </div>
+            </div>
+
+            <!-- Gráfico de Comparação -->
+            <div id="chartContainer" class="chart-container hidden">
+                <h3 class="chart-title">📊 Distribuição dos Palpites</h3>
+                <div class="chart-wrapper">
+                    <div class="chart-svg-wrapper">
+                        <svg id="pieChart" class="pie-chart" viewBox="0 0 200 200">
+                            <circle id="chartBackground" class="chart-bg" cx="100" cy="100" r="80"></circle>
+                            <circle id="chartMenina" class="chart-segment chart-menina" cx="100" cy="100" r="80"></circle>
+                            <circle id="chartMenino" class="chart-segment chart-menino" cx="100" cy="100" r="80"></circle>
+                            <text id="chartCenterText" class="chart-center-text" x="100" y="100" text-anchor="middle" dominant-baseline="middle">0</text>
+                        </svg>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color legend-menina">👶💕</span>
+                            <span class="legend-label">Menina</span>
+                            <span class="legend-value" id="legendMenina">0%</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color legend-menino">👶💙</span>
+                            <span class="legend-label">Menino</span>
+                            <span class="legend-value" id="legendMenino">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="palpitesContainer" class="palpites-grid">
+                <!-- Palpites serão inseridos aqui via JavaScript -->
+            </div>
+
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-state-icon">🌿</div>
+                <h2>Ainda não há palpites registrados</h2>
+                <p>Seja o primeiro a deixar seu palpite!</p>
+                <a href="index.html" class="view-palpites-btn" style="margin-top: 20px;">
+                    Adicionar Primeiro Palpite
+                </a>
+            </div>
+
+            <div class="stats-container" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e8d8;">
+                <button onclick="exportPalpites()" class="view-palpites-btn">
+                    📥 Exportar Palpites
+                </button>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Feito com 💚 para este momento especial</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="palpites.js"></script>
+</body>
+</html>
+
+

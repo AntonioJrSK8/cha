@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Árvore dos Palpites - Reveillon do Bebê</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <!-- QRCode library - tentará carregar de múltiplos CDNs -->
+    <script>
+        // Tenta carregar QRCode de múltiplos CDNs
+        (function() {
+            const cdnUrls = [
+                'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+                'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+            ];
+            
+            let currentIndex = 0;
+            
+            function loadScript(url, callback) {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = callback;
+                script.onerror = function() {
+                    if (currentIndex < cdnUrls.length - 1) {
+                        currentIndex++;
+                        loadScript(cdnUrls[currentIndex], callback);
+                    } else {
+                        console.warn('Todos os CDNs falharam. Usando fallback de API online.');
+                    }
+                };
+                document.head.appendChild(script);
+            }
+            
+            if (typeof QRCode === 'undefined') {
+                loadScript(cdnUrls[0], function() {
+                    console.log('QRCode carregado com sucesso');
+                });
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="tree-icon">🌳</div>
+            <h1 class="title">Árvore dos Palpites</h1>
+            <p class="subtitle">Nossos Desejos para o Bebê</p>
+        </header>
+
+        <main class="main-content">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Deixe seu Palpite</h2>
+                    <p>Compartilhe sua expectativa e carinho para este momento especial</p>
+                </div>
+
+                <form id="palpiteForm" class="palpite-form">
+                    <div class="form-group">
+                        <label for="nome">Seu Nome *</label>
+                        <input type="text" id="nome" name="nome" required placeholder="Digite seu nome">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Palpite do Sexo *</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="sexo" value="menina" required>
+                                <span class="radio-custom">👶</span>
+                                <span>Menina</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="sexo" value="menino" required>
+                                <span class="radio-custom">👶</span>
+                                <span>Menino</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sugestaoNome">Sugestão de Nome (opcional)</label>
+                        <input type="text" id="sugestaoNome" name="sugestaoNome" placeholder="Ex: Maria, João, Sofia...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensagem">Mensagem Carinhosa *</label>
+                        <textarea id="mensagem" name="mensagem" required rows="4" placeholder="Deixe uma mensagem especial para o bebê e os pais..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataPalpite">Data do Palpite</label>
+                        <input type="date" id="dataPalpite" name="dataPalpite" required>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span>🌿</span>
+                        Adicionar Palpite à Árvore
+                    </button>
+                </form>
+
+                <div id="successMessage" class="success-message hidden">
+                    <div class="success-icon">✨</div>
+                    <p></p>
+                    <div id="qrcodeContainer" class="qrcode-container hidden">
+                        <h4 class="qrcode-title">💝 Vamos transformar a surpresa maior em memórias que vão durar para sempre.</h4>
+                        <div id="qrcode" class="qrcode"></div>
+                        <p class="qrcode-text">Escaneie o QR Code com seu app de pagamento</p>
+                        <p class="qrcode-info">Chave PIX: <strong id="pixKeyDisplay"></strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-container">
+                <a href="palpites.html" class="view-palpites-btn">
+                    <span>👀</span>
+                    Ver Todos os Palpites
+                </a>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Feito com 💚 para este momento especial</p>
+        </footer>
+    </div>
+
+    <!-- Player de Música -->
+    <div class="music-player">
+        <audio id="backgroundMusic" loop preload="auto">
+            <source src="audio/aquarela.mp3" type="audio/mpeg">
+            <source src="audio/aquarela.ogg" type="audio/ogg">
+            Seu navegador não suporta áudio HTML5.
+        </audio>
+        <button id="musicToggle" class="music-toggle" aria-label="Tocar/Pausar música">
+            <span id="musicIcon">🎵</span>
+        </button>
+    </div>
+
+    <!-- Banner para ativar música (aparece se autoplay for bloqueado) -->
+    <div id="musicPrompt" class="music-prompt hidden">
+        <div class="music-prompt-content">
+            <span class="music-prompt-icon">🎵</span>
+            <p>Clique em qualquer lugar para ativar a música de fundo</p>
+            <button id="musicPromptClose" class="music-prompt-close">✕</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
