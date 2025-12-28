@@ -29,18 +29,28 @@ async function isAPIAvailable() {
     // Para localhost ou 127.0.0.1, tenta verificar se a API está disponível
     try {
         // Cria um timeout manual para melhor compatibilidade
+        // Aumentamos o timeout para dar mais tempo ao servidor local
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000); // Reduzido para 1 segundo
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 3000); // 3 segundos - tempo suficiente para servidor local responder
         
         const response = await fetch('/api/palpites', {
             method: 'GET',
-            signal: controller.signal
+            signal: controller.signal,
+            // Evita cache para garantir verificação real
+            cache: 'no-cache'
         });
         
         clearTimeout(timeoutId);
         return response.ok;
     } catch (error) {
-        // Se der erro (timeout, network error, etc), retorna false
+        // Se der erro (timeout, network error, abort, etc), retorna false
+        // Não logamos o erro aqui pois é esperado quando não há servidor
+        if (error.name !== 'AbortError') {
+            // Só loga erros não relacionados a abort/timeout
+            console.debug('API não disponível:', error.message);
+        }
         return false;
     }
 }

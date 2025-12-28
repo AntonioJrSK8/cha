@@ -75,21 +75,33 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
         try:
             palpites = get_all_palpites()
             self.send_json_response(200, {'palpites': palpites})
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
+            pass
         except Exception as e:
-            self.send_json_response(500, {'error': str(e)})
+            try:
+                self.send_json_response(500, {'error': str(e)})
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                pass
     
     def handle_get_stats(self):
         """Retorna estatísticas dos palpites"""
         try:
             stats = get_stats()
             self.send_json_response(200, stats)
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
+            pass
         except Exception as e:
-            self.send_json_response(500, {'error': str(e)})
+            try:
+                self.send_json_response(500, {'error': str(e)})
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                pass
     
     def handle_post_palpite(self):
         """Adiciona um novo palpite"""
         try:
-            content_length = int(self.headers['Content-Length'])
+            content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
             
@@ -97,11 +109,17 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
             required_fields = ['nome', 'sexo', 'mensagem', 'dataPalpite']
             for field in required_fields:
                 if field not in data:
-                    self.send_json_response(400, {'error': f'Campo obrigatório ausente: {field}'})
+                    try:
+                        self.send_json_response(400, {'error': f'Campo obrigatório ausente: {field}'})
+                    except (ConnectionResetError, BrokenPipeError, OSError):
+                        pass
                     return
             
             if data['sexo'] not in ['menina', 'menino']:
-                self.send_json_response(400, {'error': 'Sexo deve ser "menina" ou "menino"'})
+                try:
+                    self.send_json_response(400, {'error': 'Sexo deve ser "menina" ou "menino"'})
+                except (ConnectionResetError, BrokenPipeError, OSError):
+                    pass
                 return
             
             # Adiciona o palpite
@@ -114,28 +132,51 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
             )
             
             self.send_json_response(201, {'id': palpite_id, 'message': 'Palpite adicionado com sucesso'})
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
+            pass
         except json.JSONDecodeError:
-            self.send_json_response(400, {'error': 'JSON inválido'})
+            try:
+                self.send_json_response(400, {'error': 'JSON inválido'})
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                pass
         except Exception as e:
-            self.send_json_response(500, {'error': str(e)})
+            try:
+                self.send_json_response(500, {'error': str(e)})
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                pass
     
     def handle_delete_palpites(self):
         """Remove todos os palpites"""
         try:
             clear_all_palpites()
             self.send_json_response(200, {'message': 'Todos os palpites foram removidos'})
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
+            pass
         except Exception as e:
-            self.send_json_response(500, {'error': str(e)})
+            try:
+                self.send_json_response(500, {'error': str(e)})
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                pass
     
     def send_json_response(self, status_code, data):
         """Envia uma resposta JSON"""
-        self.send_response(status_code)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_cors_headers()
-        self.end_headers()
-        
-        response = json.dumps(data, ensure_ascii=False, indent=2)
-        self.wfile.write(response.encode('utf-8'))
+        try:
+            self.send_response(status_code)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_cors_headers()
+            self.end_headers()
+            
+            response = json.dumps(data, ensure_ascii=False, indent=2)
+            self.wfile.write(response.encode('utf-8'))
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            # Cliente fechou a conexão antes de receber a resposta (timeout, abort, etc)
+            # Isso é normal e não precisa ser logado como erro
+            pass
+        except Exception as e:
+            # Outros erros podem ser logados
+            self.log_error(f"Erro ao enviar resposta: {e}")
     
     def end_headers(self):
         """Adiciona headers CORS em todas as respostas"""
@@ -144,7 +185,14 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     
     def log_message(self, format, *args):
         """Customiza as mensagens de log"""
-        print(f"[{self.log_date_time_string()}] {format % args}")
+        # Ignora mensagens de erro de conexão fechada (normal quando cliente aborta requisição)
+        message = format % args
+        if '10054' not in message and 'ConnectionResetError' not in message and 'BrokenPipeError' not in message:
+            print(f"[{self.log_date_time_string()}] {message}")
+    
+    def log_error(self, message):
+        """Log de erros"""
+        print(f"[{self.log_date_time_string()}] ERROR: {message}")
 
 def main():
     """Função principal"""
