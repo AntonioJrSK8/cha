@@ -43,8 +43,14 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
         """Handle GET requests"""
         parsed_path = urllib.parse.urlparse(self.path)
         
-        # Ignora requisições de favicon.ico silenciosamente
+        # Ignora requisições de favicon.ico e chrome devtools silenciosamente
         if parsed_path.path == '/favicon.ico':
+            self.send_response(204)  # No Content
+            self.end_headers()
+            return
+        
+        # Ignora requisições do Chrome DevTools
+        if '.well-known' in parsed_path.path or 'devtools' in parsed_path.path:
             self.send_response(204)  # No Content
             self.end_headers()
             return
@@ -66,9 +72,13 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
         """Handle POST requests"""
         parsed_path = urllib.parse.urlparse(self.path)
         
+        print(f"📥 POST recebido para: {parsed_path.path}")
+        
         if parsed_path.path == '/api/palpites':
+            print("✅ Roteando para handle_post_palpite()")
             self.handle_post_palpite()
         else:
+            print(f"❌ Endpoint não encontrado: {parsed_path.path}")
             self.send_error(404, "Not Found")
     
     def do_DELETE(self):
@@ -111,9 +121,20 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     def handle_post_palpite(self):
         """Adiciona um novo palpite"""
         try:
+            print("🔄 Processando POST /api/palpites...")
             content_length = int(self.headers.get('Content-Length', 0))
+            print(f"📏 Content-Length: {content_length}")
+            
+            if content_length == 0:
+                print("❌ Content-Length é 0 - nenhum dado recebido")
+                self.send_json_response(400, {'error': 'Nenhum dado recebido'})
+                return
+            
             post_data = self.rfile.read(content_length)
+            print(f"📦 Dados recebidos: {len(post_data)} bytes")
+            
             data = json.loads(post_data.decode('utf-8'))
+            print(f"✅ JSON decodificado: {data}")
             
             # Validação dos dados
             required_fields = ['nome', 'sexo', 'mensagem', 'dataPalpite']
@@ -133,6 +154,7 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             # Adiciona o palpite
+            print("💾 Salvando no banco de dados...")
             palpite_id = add_palpite(
                 nome=data['nome'],
                 sexo=data['sexo'],
@@ -141,7 +163,9 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 sugestao_nome=data.get('sugestaoNome')
             )
             
+            print(f"✅ Palpite salvo com ID: {palpite_id}")
             self.send_json_response(201, {'id': palpite_id, 'message': 'Palpite adicionado com sucesso'})
+            print("📤 Resposta enviada ao cliente")
         except (ConnectionResetError, BrokenPipeError, OSError) as e:
             # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
             pass
@@ -206,8 +230,10 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     def log_error(self, format, *args):
         """Log de erros - sobrescreve para aceitar os mesmos argumentos da classe base"""
         message = format % args if args else format
-        # Ignora erros de favicon.ico que é comum em navegadores
-        if 'favicon.ico' not in message.lower():
+        # Ignora erros comuns que não são críticos
+        if 'favicon.ico' not in message.lower() and \
+           '.well-known' not in message.lower() and \
+           'devtools' not in message.lower():
             print(f"[{self.log_date_time_string()}] ERROR: {message}")
 
 def main():

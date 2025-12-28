@@ -58,7 +58,9 @@ function initializeForm() {
 
 // Manipula o envio do formulário
 async function handleFormSubmit(e) {
+    console.log('🚀 handleFormSubmit chamado!', e);
     e.preventDefault();
+    console.log('✅ preventDefault executado');
     
     const formData = new FormData(e.target);
     const palpite = {
@@ -68,12 +70,20 @@ async function handleFormSubmit(e) {
         mensagem: formData.get('mensagem'),
         dataPalpite: formData.get('dataPalpite')
     };
+    
+    console.log('📋 Dados do formulário coletados:', palpite);
 
     // Desabilita o botão durante o envio
     const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (!submitBtn) {
+        console.error('❌ Botão submit não encontrado!');
+        return;
+    }
+    
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span>⏳</span> Enviando...';
+    console.log('🔒 Botão desabilitado');
 
     try {
         console.log('📝 Iniciando salvamento do palpite...', palpite);
