@@ -15,7 +15,7 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'palpites.db'
 
 def init_db():
     """Inicializa o banco de dados e cria a tabela se não existir"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -36,7 +36,8 @@ def init_db():
 
 def add_palpite(nome, sexo, mensagem, data_palpite, sugestao_nome=None):
     """Adiciona um novo palpite ao banco de dados"""
-    conn = sqlite3.connect(DB_PATH)
+    # Usa timeout para evitar travamentos
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
     cursor = conn.cursor()
     
     try:
@@ -55,34 +56,39 @@ def add_palpite(nome, sexo, mensagem, data_palpite, sugestao_nome=None):
 
 def get_all_palpites():
     """Retorna todos os palpites do banco de dados"""
-    conn = sqlite3.connect(DB_PATH)
+    # Usa timeout para evitar travamentos
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
     conn.row_factory = sqlite3.Row  # Permite acessar colunas por nome
     cursor = conn.cursor()
     
-    cursor.execute('''
-        SELECT id, nome, sexo, sugestao_nome, mensagem, 
-               data_palpite, data_registro
-        FROM palpites
-        ORDER BY data_registro DESC
-    ''')
-    
-    rows = cursor.fetchall()
-    conn.close()
-    
-    # Converte para lista de dicionários
-    palpites = []
-    for row in rows:
-        palpites.append({
-            'id': row['id'],
-            'nome': row['nome'],
-            'sexo': row['sexo'],
-            'sugestaoNome': row['sugestao_nome'],
-            'mensagem': row['mensagem'],
-            'dataPalpite': row['data_palpite'],
-            'dataRegistro': row['data_registro']
-        })
-    
-    return palpites
+    try:
+        cursor.execute('''
+            SELECT id, nome, sexo, sugestao_nome, mensagem, 
+                   data_palpite, data_registro
+            FROM palpites
+            ORDER BY data_registro DESC
+        ''')
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Converte para lista de dicionários
+        palpites = []
+        for row in rows:
+            palpites.append({
+                'id': row['id'],
+                'nome': row['nome'],
+                'sexo': row['sexo'],
+                'sugestaoNome': row['sugestao_nome'],
+                'mensagem': row['mensagem'],
+                'dataPalpite': row['data_palpite'],
+                'dataRegistro': row['data_registro']
+            })
+        
+        return palpites
+    except sqlite3.Error as e:
+        conn.close()
+        raise Exception(f"Erro ao buscar palpites: {e}")
 
 def get_stats():
     """Retorna estatísticas dos palpites"""

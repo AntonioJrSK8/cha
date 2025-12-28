@@ -93,12 +93,22 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     def handle_get_palpites(self):
         """Retorna todos os palpites"""
         try:
+            import time
+            start_time = time.time()
+            print(f"📥 GET /api/palpites iniciado... [{start_time:.2f}]")
+            
             palpites = get_all_palpites()
+            elapsed = time.time() - start_time
+            print(f"✅ Palpites carregados: {len(palpites)} itens [{elapsed:.2f}s]")
+            
             self.send_json_response(200, {'palpites': palpites})
+            print(f"📤 Resposta GET enviada [{time.time() - start_time:.2f}s]")
         except (ConnectionResetError, BrokenPipeError, OSError) as e:
             # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
+            print(f"⚠️ Conexão fechada pelo cliente durante GET")
             pass
         except Exception as e:
+            print(f"❌ Erro ao processar GET: {e}")
             try:
                 self.send_json_response(500, {'error': str(e)})
             except (ConnectionResetError, BrokenPipeError, OSError):
@@ -121,9 +131,12 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     def handle_post_palpite(self):
         """Adiciona um novo palpite"""
         try:
-            print("🔄 Processando POST /api/palpites...")
+            import time
+            start_time = time.time()
+            print(f"🔄 Processando POST /api/palpites... [{start_time:.2f}]")
+            
             content_length = int(self.headers.get('Content-Length', 0))
-            print(f"📏 Content-Length: {content_length}")
+            print(f"📏 Content-Length: {content_length} [{time.time() - start_time:.2f}s]")
             
             if content_length == 0:
                 print("❌ Content-Length é 0 - nenhum dado recebido")
@@ -131,10 +144,10 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             post_data = self.rfile.read(content_length)
-            print(f"📦 Dados recebidos: {len(post_data)} bytes")
+            print(f"📦 Dados recebidos: {len(post_data)} bytes [{time.time() - start_time:.2f}s]")
             
             data = json.loads(post_data.decode('utf-8'))
-            print(f"✅ JSON decodificado: {data}")
+            print(f"✅ JSON decodificado: {data} [{time.time() - start_time:.2f}s]")
             
             # Validação dos dados
             required_fields = ['nome', 'sexo', 'mensagem', 'dataPalpite']
@@ -154,7 +167,7 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             # Adiciona o palpite
-            print("💾 Salvando no banco de dados...")
+            print(f"💾 Salvando no banco de dados... [{time.time() - start_time:.2f}s]")
             palpite_id = add_palpite(
                 nome=data['nome'],
                 sexo=data['sexo'],
@@ -163,9 +176,10 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
                 sugestao_nome=data.get('sugestaoNome')
             )
             
-            print(f"✅ Palpite salvo com ID: {palpite_id}")
+            elapsed = time.time() - start_time
+            print(f"✅ Palpite salvo com ID: {palpite_id} [{elapsed:.2f}s]")
             self.send_json_response(201, {'id': palpite_id, 'message': 'Palpite adicionado com sucesso'})
-            print("📤 Resposta enviada ao cliente")
+            print(f"📤 Resposta enviada ao cliente [{time.time() - start_time:.2f}s]")
         except (ConnectionResetError, BrokenPipeError, OSError) as e:
             # Cliente fechou a conexão (timeout, abort, etc) - não é um erro crítico
             pass
@@ -244,7 +258,12 @@ def main():
     
     # Verifica se a porta está disponível
     try:
-        with socketserver.TCPServer(("", PORT), APIHandler) as httpd:
+        # Usa ThreadingMixIn para suportar requisições simultâneas
+        class ThreadingHTTPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+            daemon_threads = True
+            allow_reuse_address = True
+        
+        with ThreadingHTTPServer(("", PORT), APIHandler) as httpd:
             print("=" * 60)
             print("🌳 Servidor da Árvore dos Palpites")
             print("=" * 60)
