@@ -62,6 +62,26 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     console.log('✅ preventDefault executado');
     
+    // Pausa a música para melhorar performance durante o envio
+    const audio = document.getElementById('backgroundMusic');
+    let musicaEstavaTocando = false;
+    
+    if (audio && !audio.paused) {
+        musicaEstavaTocando = true;
+        audio.pause();
+        console.log('🎵 Música pausada para melhorar performance');
+        
+        // Atualiza o botão de música visualmente
+        const toggleBtn = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('playing');
+        }
+        if (musicIcon) {
+            musicIcon.textContent = '🔇';
+        }
+    }
+    
     const formData = new FormData(e.target);
     const palpite = {
         nome: formData.get('nome'),
@@ -124,6 +144,12 @@ async function handleFormSubmit(e) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
         console.log('🔄 Botão reabilitado');
+        
+        // Opcional: Retoma a música se estava tocando (comentado para manter pausada)
+        // Se quiser que a música volte automaticamente após o envio, descomente:
+        // if (musicaEstavaTocando && audio) {
+        //     audio.play().catch(err => console.log('Não foi possível retomar a música:', err));
+        // }
     }
 }
 
