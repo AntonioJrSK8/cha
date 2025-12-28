@@ -12,14 +12,25 @@ const isGitHubPages = window.location.hostname.includes('github.io') ||
                       window.location.hostname.includes('github.com') ||
                       window.location.protocol === 'file:';
 
+// Log para debug (remover em produção se necessário)
+if (isGitHubPages) {
+    console.log('🌐 Modo GitHub Pages detectado - usando localStorage');
+} else {
+    console.log('💻 Modo local detectado - tentando API primeiro');
+}
+
 // Função auxiliar para detectar se a API está disponível
 async function isAPIAvailable() {
-    if (isGitHubPages) return false;
+    // Se já sabemos que é GitHub Pages, não tenta a API
+    if (isGitHubPages) {
+        return false;
+    }
     
+    // Para localhost ou 127.0.0.1, tenta verificar se a API está disponível
     try {
         // Cria um timeout manual para melhor compatibilidade
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const timeoutId = setTimeout(() => controller.abort(), 1000); // Reduzido para 1 segundo
         
         const response = await fetch('/api/palpites', {
             method: 'GET',
@@ -29,6 +40,7 @@ async function isAPIAvailable() {
         clearTimeout(timeoutId);
         return response.ok;
     } catch (error) {
+        // Se der erro (timeout, network error, etc), retorna false
         return false;
     }
 }
@@ -98,7 +110,13 @@ async function handleFormSubmit(e) {
 
 // Salva o palpite no servidor (SQLite) ou localStorage (fallback)
 async function savePalpite(palpite) {
-    // Verifica se a API está disponível
+    // Se estiver no GitHub Pages, usa localStorage diretamente sem tentar API
+    if (isGitHubPages) {
+        console.log('💾 Salvando no localStorage (GitHub Pages)');
+        return savePalpiteLocalStorage(palpite);
+    }
+    
+    // Para ambiente local, verifica se a API está disponível
     const apiAvailable = await isAPIAvailable();
     
     if (apiAvailable) {
@@ -116,14 +134,16 @@ async function savePalpite(palpite) {
             }
             
             const result = await response.json();
+            console.log('✅ Palpite salvo na API');
             return result;
         } catch (error) {
-            console.warn('API não disponível, usando localStorage:', error);
+            console.warn('⚠️ API não disponível, usando localStorage como fallback:', error);
             // Fallback para localStorage
             return savePalpiteLocalStorage(palpite);
         }
     } else {
-        // Usa localStorage diretamente
+        // API não disponível, usa localStorage
+        console.log('💾 Salvando no localStorage (API não disponível)');
         return savePalpiteLocalStorage(palpite);
     }
 }
@@ -157,7 +177,12 @@ function savePalpiteLocalStorage(palpite) {
 
 // Obtém todos os palpites do servidor (SQLite) ou localStorage (fallback)
 async function getPalpites() {
-    // Verifica se a API está disponível
+    // Se estiver no GitHub Pages, usa localStorage diretamente sem tentar API
+    if (isGitHubPages) {
+        return getPalpitesLocalStorage();
+    }
+    
+    // Para ambiente local, verifica se a API está disponível
     const apiAvailable = await isAPIAvailable();
     
     if (apiAvailable) {
@@ -503,26 +528,31 @@ async function exportPalpites() {
 // Função para limpar todos os palpites (cuidado!)
 async function clearAllPalpites() {
     if (confirm('Tem certeza que deseja apagar todos os palpites? Esta ação não pode ser desfeita.')) {
-        // Verifica se a API está disponível
-        const apiAvailable = await isAPIAvailable();
-        
-        if (apiAvailable) {
-            try {
-                const response = await fetch('/api/palpites', {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('API retornou erro');
+        // Se estiver no GitHub Pages, usa localStorage diretamente
+        if (isGitHubPages) {
+            clearAllPalpitesLocalStorage();
+        } else {
+            // Para ambiente local, verifica se a API está disponível
+            const apiAvailable = await isAPIAvailable();
+            
+            if (apiAvailable) {
+                try {
+                    const response = await fetch('/api/palpites', {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('API retornou erro');
+                    }
+                } catch (error) {
+                    console.warn('API não disponível, usando localStorage:', error);
+                    // Fallback para localStorage
+                    clearAllPalpitesLocalStorage();
                 }
-            } catch (error) {
-                console.warn('API não disponível, usando localStorage:', error);
-                // Fallback para localStorage
+            } else {
+                // Usa localStorage diretamente
                 clearAllPalpitesLocalStorage();
             }
-        } else {
-            // Usa localStorage diretamente
-            clearAllPalpitesLocalStorage();
         }
         
         if (window.location.pathname.includes('palpites.html')) {
