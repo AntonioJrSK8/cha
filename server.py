@@ -43,6 +43,12 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
         """Handle GET requests"""
         parsed_path = urllib.parse.urlparse(self.path)
         
+        # Ignora requisições de favicon.ico silenciosamente
+        if parsed_path.path == '/favicon.ico':
+            self.send_response(204)  # No Content
+            self.end_headers()
+            return
+        
         # API endpoints
         if parsed_path.path == '/api/palpites':
             self.handle_get_palpites()
@@ -50,7 +56,11 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_get_stats()
         else:
             # Serve arquivos estáticos
-            super().do_GET()
+            try:
+                super().do_GET()
+            except (ConnectionResetError, BrokenPipeError, OSError):
+                # Cliente fechou a conexão - não é um erro crítico
+                pass
     
     def do_POST(self):
         """Handle POST requests"""
@@ -176,7 +186,10 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
             pass
         except Exception as e:
             # Outros erros podem ser logados
-            self.log_error(f"Erro ao enviar resposta: {e}")
+            try:
+                self.log_error("Erro ao enviar resposta: %s", str(e))
+            except:
+                pass  # Se log_error falhar, ignora
     
     def end_headers(self):
         """Adiciona headers CORS em todas as respostas"""
@@ -186,13 +199,16 @@ class APIHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         """Customiza as mensagens de log"""
         # Ignora mensagens de erro de conexão fechada (normal quando cliente aborta requisição)
-        message = format % args
+        message = format % args if args else format
         if '10054' not in message and 'ConnectionResetError' not in message and 'BrokenPipeError' not in message:
             print(f"[{self.log_date_time_string()}] {message}")
     
-    def log_error(self, message):
-        """Log de erros"""
-        print(f"[{self.log_date_time_string()}] ERROR: {message}")
+    def log_error(self, format, *args):
+        """Log de erros - sobrescreve para aceitar os mesmos argumentos da classe base"""
+        message = format % args if args else format
+        # Ignora erros de favicon.ico que é comum em navegadores
+        if 'favicon.ico' not in message.lower():
+            print(f"[{self.log_date_time_string()}] ERROR: {message}")
 
 def main():
     """Função principal"""
