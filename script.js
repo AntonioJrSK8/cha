@@ -108,24 +108,28 @@ async function handleFormSubmit(e) {
     try {
         console.log('📝 Iniciando salvamento do palpite...', palpite);
         
-        // Verifica quantos palpites existem antes de salvar
-        let palpitesExistentes = [];
-        let isGanhador = false;
-        
-        try {
-            palpitesExistentes = await getPalpites();
-            const numeroTotal = palpitesExistentes.length + 1; // +1 porque vamos adicionar este
-            isGanhador = numeroTotal === 10;
-            console.log(`📊 Total de palpites existentes: ${palpitesExistentes.length}, será o ${numeroTotal}º`);
-        } catch (error) {
-            console.warn('⚠️ Erro ao carregar palpites existentes, continuando...', error);
-            // Continua mesmo se não conseguir carregar os existentes
-        }
-        
-        // Salva o palpite no servidor
+        // Salva o palpite primeiro (mais importante)
         console.log('💾 Salvando palpite...');
         const resultado = await savePalpite(palpite);
         console.log('✅ Palpite salvo:', resultado);
+
+        // Verifica se é ganhador APÓS salvar (não bloqueia o envio)
+        let isGanhador = false;
+        try {
+            // Usa Promise.race com timeout para não travar
+            const palpitesPromise = getPalpites();
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 3000)
+            );
+            
+            const palpitesExistentes = await Promise.race([palpitesPromise, timeoutPromise]);
+            const numeroTotal = palpitesExistentes.length;
+            isGanhador = numeroTotal === 10;
+            console.log(`📊 Total de palpites após salvar: ${numeroTotal}, é o ${numeroTotal}º palpite? ${isGanhador}`);
+        } catch (error) {
+            console.warn('⚠️ Não foi possível verificar se é ganhador (timeout ou erro), continuando...', error.message);
+            // Continua mesmo se não conseguir verificar (não é crítico)
+        }
 
         // Mostra mensagem de sucesso (com informação se é ganhador)
         showSuccessMessage(isGanhador);
@@ -252,10 +256,17 @@ async function getPalpites() {
     // Para localhost ou qualquer ambiente que não seja GitHub Pages, SEMPRE tenta API primeiro
     console.log('🌐 Tentando carregar palpites da API...');
     try {
+        // Adiciona timeout para evitar que trave indefinidamente
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos de timeout
+        
         const response = await fetch('/api/palpites', {
             method: 'GET',
-            cache: 'no-cache'
+            cache: 'no-cache',
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
             throw new Error(`API retornou erro: ${response.status} ${response.statusText}`);
@@ -266,8 +277,12 @@ async function getPalpites() {
         console.log(`✅ Carregados ${palpites.length} palpites da API`);
         return palpites;
     } catch (error) {
-        // Se der erro na API (servidor offline, erro de rede, etc), usa localStorage como fallback
-        console.warn('⚠️ Erro ao carregar da API, usando localStorage como fallback:', error.message);
+        // Se der erro na API (servidor offline, erro de rede, timeout, etc), usa localStorage como fallback
+        if (error.name === 'AbortError') {
+            console.warn('⏱️ Timeout ao carregar da API (5s), usando localStorage como fallback');
+        } else {
+            console.warn('⚠️ Erro ao carregar da API, usando localStorage como fallback:', error.message);
+        }
         console.log('💾 Carregando palpites do localStorage...');
         return getPalpitesLocalStorage();
     }
