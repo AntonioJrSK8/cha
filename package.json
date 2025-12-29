@@ -1,0 +1,16 @@
+{
+  "name": "arvore-palpites",
+  "version": "2.0.0",
+  "description": "Árvore dos Palpites - Configuração via .env",
+  "scripts": {
+    "build-config": "node build-config.js",
+    "setup": "node build-config.js"
+  },
+  "keywords": [
+    "supabase",
+    "javascript"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

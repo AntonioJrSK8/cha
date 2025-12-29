@@ -39,15 +39,35 @@ Este projeto usa **Supabase** (PostgreSQL na nuvem) como banco de dados, funcion
 
 ### Passo 4: Configurar no Projeto
 
+**Opção A: Usando Arquivo .env (Recomendado)**
+
+1. Copie o arquivo de exemplo:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edite o arquivo `.env` com suas credenciais:
+   ```env
+   SUPABASE_URL=https://seu-projeto.supabase.co
+   SUPABASE_ANON_KEY=sua-chave-anon-aqui
+   ```
+
+3. Gere o `config.js` a partir do `.env`:
+   ```bash
+   node build-config.js
+   ```
+   
+   Ou usando npm:
+   ```bash
+   npm run build-config
+   ```
+
+**Opção B: Editar config.js Manualmente**
+
 1. Abra o arquivo `config.js`
-2. Substitua os valores:
+2. Substitua os valores diretamente
 
-```javascript
-window.SUPABASE_URL = 'https://seu-projeto.supabase.co';
-window.SUPABASE_ANON_KEY = 'sua-chave-anon-aqui';
-```
-
-**⚠️ IMPORTANTE**: Não commite credenciais reais no Git! Use `.env` ou configure diretamente no servidor de produção.
+**⚠️ IMPORTANTE**: Não commite credenciais reais no Git! Use `.env` (recomendado) ou configure diretamente no servidor de produção.
 
 ### Passo 5: Criar Tabela no Supabase
 

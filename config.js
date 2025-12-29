@@ -1,18 +1,17 @@
 /**
  * Configurações do Supabase
  * 
- * IMPORTANTE: Você tem duas opções:
+ * IMPORTANTE: Este arquivo é gerado automaticamente a partir do arquivo .env
+ * NÃO edite este arquivo manualmente!
  * 
- * OPÇÃO 1 (Recomendada): Defina as credenciais diretamente abaixo
+ * Para alterar as configurações, edite o arquivo .env e execute: node build-config.js
  * 
- * OPÇÃO 2: Carregue de um endpoint da API (descomente o código ao final)
- *          Neste caso, você precisa ter um servidor que forneça /api/config
+ * Gerado em: 2025-12-29T19:01:20.159Z
  */
 
 // ============================================
-// OPÇÃO 1: Configuração direta (RECOMENDADA)
+// Credenciais carregadas do arquivo .env
 // ============================================
-// Substitua pelos valores reais do seu projeto Supabase
 window.SUPABASE_URL = 'https://wpoylhkuonuzmugtxodn.supabase.co';
 window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indwb3lsaGt1b251em11Z3R4b2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMTE3ODksImV4cCI6MjA4MjU4Nzc4OX0.K9a5dmDKDYvI7IqP45wBGmc3Qxn1tRYSdjUG2XinAEU';
 

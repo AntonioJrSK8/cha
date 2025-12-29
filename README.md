@@ -29,8 +29,15 @@ Um site interativo e encantador para coletar palpites e mensagens carinhosas dur
    - Veja instruções detalhadas em `README-SUPABASE.md`
 
 2. **Configure as credenciais**:
+   
+   **Opção A: Usando .env (Recomendado)**
+   - Copie `.env.example` para `.env`
+   - Edite `.env` com suas credenciais do Supabase
+   - Execute `node build-config.js` para gerar `config.js`
+   
+   **Opção B: Manual**
    - Copie `config.js.example` para `config.js`
-   - Edite `config.js` com suas credenciais do Supabase
+   - Edite `config.js` diretamente com suas credenciais
 
 3. **Crie a tabela no Supabase**:
    - No SQL Editor do Supabase, execute o arquivo `supabase_schema.sql`
