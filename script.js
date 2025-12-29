@@ -83,8 +83,8 @@ async function handleFormSubmit(e) {
         const isGanhador = numeroTotal === 10;
         console.log(`📊 Total de palpites existentes: ${palpitesExistentes.length}, será o ${numeroTotal}º`);
         
-        // Salva o palpite no SQLite
-        console.log('💾 Salvando palpite no SQLite...');
+        // Salva o palpite no Supabase
+        console.log('💾 Salvando palpite no Supabase...');
         const resultado = await savePalpite(palpite, isGanhador);
         console.log('✅ Palpite salvo:', resultado);
 
@@ -111,7 +111,7 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Salva o palpite no SQLite (100% JavaScript)
+// Salva o palpite no Supabase (100% JavaScript)
 async function savePalpite(palpite, isGanhador = false) {
     // Validação básica dos dados
     if (!palpite.nome || !palpite.sexo || !palpite.mensagem || !palpite.dataPalpite) {
@@ -119,10 +119,10 @@ async function savePalpite(palpite, isGanhador = false) {
     }
     
     try {
-        // Garante que SQLite está inicializado
+        // Garante que Supabase está inicializado
         await window.SQLiteDB.init();
         
-        // Salva no SQLite
+        // Salva no Supabase
         const palpiteId = await window.SQLiteDB.addPalpite(
             palpite.nome,
             palpite.sexo,
@@ -132,7 +132,7 @@ async function savePalpite(palpite, isGanhador = false) {
             isGanhador
         );
         
-        console.log(`✅ Palpite salvo no SQLite com ID: ${palpiteId}`);
+        console.log(`✅ Palpite salvo no Supabase com ID: ${palpiteId}`);
         
         return { 
             id: palpiteId, 
@@ -140,26 +140,20 @@ async function savePalpite(palpite, isGanhador = false) {
             ehGanhador: isGanhador
         };
     } catch (error) {
-        console.error('❌ Erro ao salvar no SQLite:', error);
+        console.error('❌ Erro ao salvar no Supabase:', error);
         throw new Error('Erro ao salvar palpite: ' + error.message);
     }
 }
 
-// Obtém todos os palpites do SQLite compartilhado via API REST
+// Obtém todos os palpites do Supabase (100% JavaScript)
 async function getPalpites() {
     try {
-        const response = await fetch('/api/palpites', {
-            method: 'GET',
-            cache: 'no-cache'
-        });
+        // Garante que Supabase está inicializado
+        await window.SQLiteDB.init();
         
-        if (!response.ok) {
-            throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        const palpites = data.palpites || [];
-        console.log(`✅ Carregados ${palpites.length} palpites do banco compartilhado`);
+        // Busca palpites do Supabase
+        const palpites = await window.SQLiteDB.getAllPalpites();
+        console.log(`✅ Carregados ${palpites.length} palpites do Supabase`);
         return palpites;
     } catch (error) {
         console.error('❌ Erro ao carregar palpites:', error);
@@ -672,15 +666,13 @@ async function exportPalpites() {
 async function clearAllPalpites() {
     if (confirm('Tem certeza que deseja apagar todos os palpites? Esta ação não pode ser desfeita.')) {
         try {
-            const response = await fetch('/api/palpites', {
-                method: 'DELETE'
-            });
+            // Garante que Supabase está inicializado
+            await window.SQLiteDB.init();
             
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`);
-            }
+            // Remove todos os palpites do Supabase
+            await window.SQLiteDB.clearAllPalpites();
             
-            console.log('✅ Todos os palpites foram removidos do banco compartilhado');
+            console.log('✅ Todos os palpites foram removidos do Supabase');
             
             if (window.location.pathname.includes('palpites.html')) {
                 location.reload();

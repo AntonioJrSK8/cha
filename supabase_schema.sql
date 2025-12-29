@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.palpites (
     mensagem TEXT NOT NULL,
     data_palpite DATE NOT NULL,
     data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    eh_ganhador BOOLEAN DEFAULT FALSE
+    eh_ganhador INTEGER DEFAULT 0 CHECK (eh_ganhador IN (0, 1))
 );
 
 -- ============================================
@@ -92,7 +92,7 @@ COMMENT ON COLUMN public.palpites.eh_ganhador IS 'Indica se é o ganhador do vou
 
 -- Exemplo 4: 10º palpite (ganhador do voucher)
 -- INSERT INTO public.palpites (nome, sexo, mensagem, data_palpite, eh_ganhador)
--- VALUES ('Marcia Brandão', 'menina', 'Parabéns! Palavra chave: BRANDAO10', '2025-12-28', true);
+-- VALUES ('Marcia Brandão', 'menina', 'Parabéns! Palavra chave: BRANDAO10', '2025-12-28', 1);
 
 -- ============================================
 -- Consultas úteis
@@ -107,14 +107,14 @@ COMMENT ON COLUMN public.palpites.eh_ganhador IS 'Indica se é o ganhador do vou
 -- Contar palpites por sexo
 -- SELECT sexo, COUNT(*) as total FROM public.palpites GROUP BY sexo;
 
--- Buscar o ganhador
--- SELECT * FROM public.palpites WHERE eh_ganhador = true;
+-- Buscar o ganhador (eh_ganhador = 1)
+-- SELECT * FROM public.palpites WHERE eh_ganhador = 1;
 
 -- Estatísticas completas
 -- SELECT 
 --     COUNT(*) as total,
 --     SUM(CASE WHEN sexo = 'menina' THEN 1 ELSE 0 END) as meninas,
 --     SUM(CASE WHEN sexo = 'menino' THEN 1 ELSE 0 END) as meninos,
---     (SELECT nome FROM public.palpites WHERE eh_ganhador = true LIMIT 1) as ganhador
+--     (SELECT nome FROM public.palpites WHERE eh_ganhador = 1 LIMIT 1) as ganhador
 -- FROM public.palpites;
 

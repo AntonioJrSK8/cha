@@ -102,19 +102,31 @@ async function addPalpite(nome, sexo, mensagem, dataPalpite, sugestaoNome = null
             .select('*', { count: 'exact', head: true });
 
         const totalPalpites = count || 0;
-        const isGanhador = (totalPalpites + 1) === 10;
+        
+        // Calcula se é ganhador (usa o valor passado se fornecido, senão calcula)
+        let isGanhador;
+        if (ehGanhador !== undefined && ehGanhador !== null) {
+            // Converte para boolean explicitamente (pode vir como string, number, etc)
+            isGanhador = ehGanhador === true || ehGanhador === 'true' || ehGanhador === 1 || ehGanhador === '1';
+        } else {
+            // Calcula automaticamente (10º palpite)
+            isGanhador = (totalPalpites + 1) === 10;
+        }
+        
+        // Converte para integer: 1 para true, 0 para false
+        const ehGanhadorValue = isGanhador ? 1 : 0;
 
-        // Insere o palpite
+        // Insere o palpite - envia 1 para true, 0 para false
         const { data, error } = await supabaseClient
             .from('palpites')
             .insert([
                 {
                     nome,
                     sexo,
-                    sugestao_nome: sugestaoNome,
+                    sugestao_nome: sugestaoNome || null,
                     mensagem,
                     data_palpite: dataPalpite,
-                    eh_ganhador: isGanhador
+                    eh_ganhador: ehGanhadorValue  // Integer: 1 para true, 0 para false
                 }
             ])
             .select()
@@ -158,7 +170,7 @@ async function getAllPalpites() {
             mensagem: p.mensagem,
             dataPalpite: p.data_palpite,
             dataRegistro: p.data_registro,
-            ehGanhador: p.eh_ganhador
+            ehGanhador: Boolean(p.eh_ganhador) // Converte 0/1 para boolean
         }));
     } catch (error) {
         console.error('❌ Erro ao buscar palpites:', error);
@@ -192,11 +204,11 @@ async function getStats() {
             .select('*', { count: 'exact', head: true })
             .eq('sexo', 'menino');
 
-        // Busca ganhador
+        // Busca ganhador (eh_ganhador = 1)
         const { data: ganhadorData } = await supabaseClient
             .from('palpites')
             .select('nome')
-            .eq('eh_ganhador', true)
+            .eq('eh_ganhador', 1)  // Usa 1 ao invés de true
             .limit(1)
             .single();
 
@@ -224,7 +236,7 @@ async function getGanhador() {
         const { data, error } = await supabaseClient
             .from('palpites')
             .select('*')
-            .eq('eh_ganhador', true)
+            .eq('eh_ganhador', 1)  // Usa 1 ao invés de true
             .limit(1)
             .single();
 
