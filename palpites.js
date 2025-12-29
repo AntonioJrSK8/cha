@@ -1,8 +1,12 @@
 // Função auxiliar para obter palpites (fallback se script.js não carregou)
-function getPalpitesLocal() {
+async function getPalpitesLocal() {
     try {
-        const palpites = localStorage.getItem('arvore_palpites');
-        return palpites ? JSON.parse(palpites) : [];
+        // Tenta usar SQLite primeiro
+        if (window.SQLiteDB) {
+            await window.SQLiteDB.init();
+            return await window.SQLiteDB.getAllPalpites();
+        }
+        return [];
     } catch (e) {
         console.error('Erro ao ler palpites:', e);
         return [];
@@ -28,11 +32,11 @@ async function loadPalpites() {
             palpites = await window.getPalpites();
         } catch (error) {
             console.error('Erro ao carregar palpites:', error);
-            // Fallback para localStorage se a API falhar
-            palpites = getPalpitesLocal();
+            // Fallback para SQLite direto
+            palpites = await getPalpitesLocal();
         }
     } else {
-        palpites = getPalpitesLocal();
+        palpites = await getPalpitesLocal();
     }
     const container = document.getElementById('palpitesContainer');
     const emptyState = document.getElementById('emptyState');

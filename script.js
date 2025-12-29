@@ -6,34 +6,20 @@ const PIX_NAME = 'ANTONIO JUNIO'; // Nome que aparecerá no QR Code
 // Configuração de exibição do QR Code
 const SHOW_QRCODE = false; // Altere para false se não quiser exibir o QR Code
 
-// Detecção de ambiente: GitHub Pages ou servidor local
-const STORAGE_KEY = 'arvore_palpites';
-const isGitHubPages = window.location.hostname.includes('github.io') || 
-                      window.location.hostname.includes('github.com') ||
-                      window.location.protocol === 'file:';
-
-// Detecta se é localhost (servidor Python)
-const isLocalhost = window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' ||
-                    window.location.hostname === '';
-
-// Log para debug
-console.log('🔍 Detecção de ambiente:');
-console.log('  - Hostname:', window.location.hostname);
-console.log('  - Protocol:', window.location.protocol);
-console.log('  - É GitHub Pages:', isGitHubPages);
-console.log('  - É Localhost:', isLocalhost);
-
-if (isGitHubPages) {
-    console.log('🌐 Modo GitHub Pages detectado - usando localStorage');
-} else if (isLocalhost) {
-    console.log('💻 Modo localhost detectado - tentando API primeiro');
-} else {
-    console.log('⚠️ Ambiente desconhecido - tentando API primeiro');
-}
+// Sistema agora usa SQLite no navegador (100% JavaScript)
+// Não precisa mais de servidor Python ou API
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Inicializa SQLite
+    try {
+        await window.SQLiteDB.init();
+        console.log('✅ SQLite inicializado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao inicializar SQLite:', error);
+        alert('Erro ao inicializar banco de dados. Recarregue a página.');
+    }
+    
     initializeForm();
     setDefaultDate();
     initializeMusic();
@@ -88,28 +74,17 @@ async function handleFormSubmit(e) {
     try {
         console.log('📝 Iniciando salvamento do palpite...', palpite);
         
-        // Salva o palpite primeiro (mais importante)
-        console.log('💾 Salvando palpite...');
-        const resultado = await savePalpite(palpite);
+        // Verifica quantos palpites existem antes de salvar
+        console.log('💾 Verificando total de palpites...');
+        const palpitesExistentes = await getPalpites();
+        const numeroTotal = palpitesExistentes.length + 1; // +1 porque vamos adicionar este
+        const isGanhador = numeroTotal === 10;
+        console.log(`📊 Total de palpites existentes: ${palpitesExistentes.length}, será o ${numeroTotal}º`);
+        
+        // Salva o palpite no SQLite
+        console.log('💾 Salvando palpite no SQLite...');
+        const resultado = await savePalpite(palpite, isGanhador);
         console.log('✅ Palpite salvo:', resultado);
-
-        // Verifica se é ganhador APÓS salvar (não bloqueia o envio)
-        let isGanhador = false;
-        try {
-            // Usa Promise.race com timeout para não travar
-            const palpitesPromise = getPalpites();
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout')), 3000)
-            );
-            
-            const palpitesExistentes = await Promise.race([palpitesPromise, timeoutPromise]);
-            const numeroTotal = palpitesExistentes.length;
-            isGanhador = numeroTotal === 10;
-            console.log(`📊 Total de palpites após salvar: ${numeroTotal}, é o ${numeroTotal}º palpite? ${isGanhador}`);
-        } catch (error) {
-            console.warn('⚠️ Não foi possível verificar se é ganhador (timeout ou erro), continuando...', error.message);
-            // Continua mesmo se não conseguir verificar (não é crítico)
-        }
 
         // Dispara fogos de artifício (mais intensos se for ganhador)
         triggerFireworks(isGanhador);
@@ -134,144 +109,52 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Salva o palpite no servidor (SQLite) ou localStorage (fallback)
-async function savePalpite(palpite) {
+// Salva o palpite no SQLite (100% JavaScript)
+async function savePalpite(palpite, isGanhador = false) {
     // Validação básica dos dados
     if (!palpite.nome || !palpite.sexo || !palpite.mensagem || !palpite.dataPalpite) {
         throw new Error('Dados do palpite incompletos');
     }
     
-    // Se estiver no GitHub Pages, usa localStorage diretamente sem tentar API
-    if (isGitHubPages) {
-        console.log('💾 Salvando no localStorage (GitHub Pages)');
-        return savePalpiteLocalStorage(palpite);
-    }
-    
-    // Para localhost ou qualquer ambiente que não seja GitHub Pages, SEMPRE tenta API primeiro
-    console.log('🌐 Tentando salvar na API...', palpite);
     try {
-        // Adiciona timeout para evitar que trave indefinidamente
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+        // Garante que SQLite está inicializado
+        await window.SQLiteDB.init();
         
-        const response = await fetch('/api/palpites', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(palpite),
-            signal: controller.signal
-        });
+        // Salva no SQLite
+        const palpiteId = await window.SQLiteDB.addPalpite(
+            palpite.nome,
+            palpite.sexo,
+            palpite.mensagem,
+            palpite.dataPalpite,
+            palpite.sugestaoNome || null,
+            isGanhador
+        );
         
-        clearTimeout(timeoutId);
-        console.log('📡 Resposta da API recebida:', response.status, response.statusText);
+        console.log(`✅ Palpite salvo no SQLite com ID: ${palpiteId}`);
         
-        if (!response.ok) {
-            // Tenta ler a mensagem de erro do servidor
-            let errorMessage = `API retornou erro: ${response.status} ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorMessage;
-                console.error('📋 Detalhes do erro:', errorData);
-            } catch (e) {
-                // Se não conseguir ler o JSON de erro, usa a mensagem padrão
-                console.error('⚠️ Não foi possível ler detalhes do erro');
-            }
-            throw new Error(errorMessage);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Palpite salvo com sucesso na API:', result);
-        return result;
-    } catch (error) {
-        // Se der erro na API (servidor offline, erro de rede, timeout, etc), usa localStorage como fallback
-        if (error.name === 'AbortError') {
-            console.warn('⏱️ Timeout ao salvar na API (10s), usando localStorage como fallback');
-        } else {
-            console.warn('⚠️ Erro ao salvar na API:', error);
-        }
-        console.log('💾 Usando localStorage como fallback...');
-        return savePalpiteLocalStorage(palpite);
-    }
-}
-
-// Salva palpite no localStorage
-function savePalpiteLocalStorage(palpite) {
-    try {
-        // Obtém palpites existentes
-        const palpites = getPalpitesLocalStorage();
-        
-        // Adiciona novo palpite com ID único
-        const newPalpite = {
-            ...palpite,
-            id: Date.now(), // Usa timestamp como ID único
-            dataRegistro: new Date().toISOString()
+        return { 
+            id: palpiteId, 
+            message: 'Palpite salvo com sucesso',
+            ehGanhador: isGanhador
         };
-        
-        palpites.push(newPalpite);
-        
-        // Salva no localStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(palpites));
-        
-        console.log('Palpite salvo no localStorage:', newPalpite);
-        
-        return { id: newPalpite.id, message: 'Palpite salvo com sucesso' };
     } catch (error) {
-        console.error('Erro ao salvar no localStorage:', error);
-        throw new Error('Erro ao salvar palpite no navegador');
+        console.error('❌ Erro ao salvar no SQLite:', error);
+        throw new Error('Erro ao salvar palpite: ' + error.message);
     }
 }
 
-// Obtém todos os palpites do servidor (SQLite) ou localStorage (fallback)
+// Obtém todos os palpites do SQLite (100% JavaScript)
 async function getPalpites() {
-    // Se estiver no GitHub Pages, usa localStorage diretamente
-    if (isGitHubPages) {
-        console.log('💾 Carregando palpites do localStorage (GitHub Pages)');
-        return getPalpitesLocalStorage();
-    }
-    
-    // Para localhost ou qualquer ambiente que não seja GitHub Pages, SEMPRE tenta API primeiro
-    console.log('🌐 Tentando carregar palpites da API...');
     try {
-        // Adiciona timeout para evitar que trave indefinidamente
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos de timeout
+        // Garante que SQLite está inicializado
+        await window.SQLiteDB.init();
         
-        const response = await fetch('/api/palpites', {
-            method: 'GET',
-            cache: 'no-cache',
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            throw new Error(`API retornou erro: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        const palpites = data.palpites || [];
-        console.log(`✅ Carregados ${palpites.length} palpites da API`);
+        // Busca no SQLite
+        const palpites = await window.SQLiteDB.getAllPalpites();
+        console.log(`✅ Carregados ${palpites.length} palpites do SQLite`);
         return palpites;
     } catch (error) {
-        // Se der erro na API (servidor offline, erro de rede, timeout, etc), usa localStorage como fallback
-        if (error.name === 'AbortError') {
-            console.warn('⏱️ Timeout ao carregar da API (5s), usando localStorage como fallback');
-        } else {
-            console.warn('⚠️ Erro ao carregar da API, usando localStorage como fallback:', error.message);
-        }
-        console.log('💾 Carregando palpites do localStorage...');
-        return getPalpitesLocalStorage();
-    }
-}
-
-// Obtém palpites do localStorage
-function getPalpitesLocalStorage() {
-    try {
-        const data = localStorage.getItem(STORAGE_KEY);
-        return data ? JSON.parse(data) : [];
-    } catch (error) {
-        console.error('Erro ao ler localStorage:', error);
+        console.error('❌ Erro ao carregar palpites do SQLite:', error);
         return [];
     }
 }
@@ -758,6 +641,7 @@ function showErrorMessage(message) {
 // Função para exportar palpites (útil para backup)
 async function exportPalpites() {
     try {
+        // Opção 1: Exportar como JSON
         const palpites = await getPalpites();
         const dataStr = JSON.stringify(palpites, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -767,6 +651,13 @@ async function exportPalpites() {
         link.download = `palpites_${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         URL.revokeObjectURL(url);
+        
+        // Opção 2: Também exportar o banco SQLite completo
+        try {
+            await window.SQLiteDB.exportDatabase();
+        } catch (e) {
+            console.log('Exportação do banco SQLite não disponível');
+        }
     } catch (error) {
         console.error('Erro ao exportar palpites:', error);
         alert('Erro ao exportar palpites. Tente novamente.');
@@ -776,42 +667,17 @@ async function exportPalpites() {
 // Função para limpar todos os palpites (cuidado!)
 async function clearAllPalpites() {
     if (confirm('Tem certeza que deseja apagar todos os palpites? Esta ação não pode ser desfeita.')) {
-        // Se estiver no GitHub Pages, usa localStorage diretamente
-        if (isGitHubPages) {
-            clearAllPalpitesLocalStorage();
-        } else {
-            // Para localhost, SEMPRE tenta API primeiro
-            try {
-                const response = await fetch('/api/palpites', {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`API retornou erro: ${response.status} ${response.statusText}`);
-                }
-                
-                console.log('✅ Palpites removidos da API');
-            } catch (error) {
-                console.warn('⚠️ Erro ao limpar na API, usando localStorage:', error.message);
-                // Fallback para localStorage
-                clearAllPalpitesLocalStorage();
+        try {
+            await window.SQLiteDB.clearAllPalpites();
+            console.log('✅ Todos os palpites foram removidos do SQLite');
+            
+            if (window.location.pathname.includes('palpites.html')) {
+                location.reload();
             }
+        } catch (error) {
+            console.error('❌ Erro ao limpar palpites:', error);
+            alert('Erro ao limpar palpites: ' + error.message);
         }
-        
-        if (window.location.pathname.includes('palpites.html')) {
-            location.reload();
-        }
-    }
-}
-
-// Limpa todos os palpites do localStorage
-function clearAllPalpitesLocalStorage() {
-    try {
-        localStorage.removeItem(STORAGE_KEY);
-        console.log('Todos os palpites foram removidos do localStorage');
-    } catch (error) {
-        console.error('Erro ao limpar localStorage:', error);
-        throw new Error('Erro ao limpar palpites');
     }
 }
 
