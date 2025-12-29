@@ -19,7 +19,7 @@ async function waitForConfig() {
     // Se não estão definidas, espera pelo evento de carregamento
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-            reject(new Error('Timeout aguardando configurações do Supabase. Verifique se config.js está carregado corretamente.'));
+            reject(new Error('Timeout aguardando configurações do Supabase. Verifique se config.js está carregado corretamente. Execute "node build-config.js" para gerar config.js a partir do arquivo .env.'));
         }, 5000); // 5 segundos de timeout
         
         window.addEventListener('supabase-config-loaded', () => {
@@ -30,11 +30,17 @@ async function waitForConfig() {
 }
 
 /**
- * Obtém as credenciais do Supabase
+ * Obtém as credenciais do Supabase (carregadas do arquivo config.js gerado do .env)
  */
 function getCredentials() {
+    // Carrega do window (definido pelo arquivo config.js gerado do .env)
     const url = window.SUPABASE_URL || '';
     const key = window.SUPABASE_ANON_KEY || '';
+    
+    if (!url || !key) {
+        throw new Error('Variáveis SUPABASE_URL e SUPABASE_ANON_KEY não encontradas. Execute "node build-config.js" para gerar config.js a partir do arquivo .env');
+    }
+    
     return { url, key };
 }
 

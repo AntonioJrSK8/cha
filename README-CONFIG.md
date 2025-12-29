@@ -2,7 +2,7 @@
 
 ## 📋 Sobre
 
-Este projeto permite usar variáveis de ambiente do arquivo `.env` para configurar as credenciais do Supabase, mantendo as informações sensíveis fora do código.
+Este projeto usa o arquivo `.env` para configurar as credenciais do Supabase. O arquivo `config.js` é gerado automaticamente a partir do `.env` e é usado pelo `database.js`.
 
 ## 🚀 Como Configurar
 
@@ -37,7 +37,7 @@ npm run build-config
 
 ### Passo 3: Verificar
 
-O arquivo `config.js` será gerado automaticamente com as credenciais do `.env`.
+O arquivo `config.js` será gerado automaticamente com as credenciais do `.env`. Este arquivo é carregado pelo HTML e usado pelo `database.js`.
 
 ## 📝 Estrutura dos Arquivos
 
@@ -45,42 +45,44 @@ O arquivo `config.js` será gerado automaticamente com as credenciais do `.env`.
 projeto/
 ├── .env              # Suas credenciais (não commitado)
 ├── .env.example      # Template de exemplo (commitado)
-├── config.js         # Gerado automaticamente (não commitado)
-├── config.js.example # Exemplo manual (commitado)
-└── build-config.js   # Script de build
+├── config.js         # Gerado automaticamente do .env (não commitado)
+├── database.js       # Usa variáveis do config.js
+└── build-config.js   # Script que gera config.js a partir do .env
 ```
 
 ## 🔒 Segurança
 
 - ✅ `.env` está no `.gitignore` (não será commitado)
 - ✅ `config.js` está no `.gitignore` (não será commitado)
-- ✅ Apenas `.env.example` e `config.js.example` são commitados
+- ✅ Apenas `.env.example` e `config.js.example` são commitados como referência
 - ✅ Nunca commite suas credenciais reais
+- ✅ `database.js` lê diretamente do `config.js` gerado do `.env`
 
 ## 🔄 Workflow
 
 ### Desenvolvimento Local
 
 1. Edite `.env` com suas credenciais
-2. Execute `node build-config.js`
+2. Execute `node build-config.js` para gerar `config.js`
 3. Abra `index.html` no navegador
+4. O `database.js` usa automaticamente as variáveis do `config.js`
 
 ### Atualizar Credenciais
 
 1. Edite o arquivo `.env`
 2. Execute `node build-config.js` novamente
-3. O `config.js` será atualizado
+3. O `config.js` será atualizado automaticamente
 
 ### Deploy/Hospedagem
 
-**Opção 1: Usar .env (com build)**
-- Configure as variáveis de ambiente no servidor
+**Opção 1: Usar .env (Recomendado)**
+- Configure as variáveis de ambiente no servidor (se disponível)
 - Execute `node build-config.js` durante o build
 - Faça deploy do `config.js` gerado
 
-**Opção 2: Configuração Manual**
-- Edite `config.js` diretamente (apenas para deploy)
-- Ou use variáveis de ambiente do servidor
+**Opção 2: Variáveis de Ambiente do Servidor**
+- Configure diretamente nas variáveis de ambiente do servidor
+- O `build-config.js` usa automaticamente `process.env`
 
 **Opção 3: Variáveis de Ambiente do Servidor**
 - Netlify: Site settings > Environment variables

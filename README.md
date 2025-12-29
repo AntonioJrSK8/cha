@@ -28,16 +28,12 @@ Um site interativo e encantador para coletar palpites e mensagens carinhosas dur
    - Crie um projeto gratuito
    - Veja instruções detalhadas em `README-SUPABASE.md`
 
-2. **Configure as credenciais**:
-   
-   **Opção A: Usando .env (Recomendado)**
+2. **Configure as credenciais usando arquivo .env**:
    - Copie `.env.example` para `.env`
    - Edite `.env` com suas credenciais do Supabase
    - Execute `node build-config.js` para gerar `config.js`
    
-   **Opção B: Manual**
-   - Copie `config.js.example` para `config.js`
-   - Edite `config.js` diretamente com suas credenciais
+   O arquivo `config.js` será gerado automaticamente e usado pelo `database.js`
 
 3. **Crie a tabela no Supabase**:
    - No SQL Editor do Supabase, execute o arquivo `supabase_schema.sql`
@@ -162,8 +158,8 @@ Os palpites são armazenados no formato:
 
 ## ⚠️ Notas Importantes
 
-- ⚠️ **Configure `config.js`** antes de usar
-- 🔑 **Nunca commite** `config.js` com credenciais reais
+- ⚠️ **Configure `.env`** e execute `node build-config.js` antes de usar
+- 🔑 **Nunca commite** `.env` ou `config.js` com credenciais reais
 - 🌐 **Funciona em qualquer hospedagem** estática
 - 💰 **Gratuito** até ~500MB de dados (suficiente para milhares de palpites)
 - 🔄 **Dados compartilhados** em tempo real entre todos os dispositivos
@@ -171,7 +167,8 @@ Os palpites são armazenados no formato:
 ## 🐛 Troubleshooting
 
 ### Site não conecta ao banco
-- Verifique se `config.js` está configurado corretamente
+- Verifique se `.env` está configurado e execute `node build-config.js`
+- Verifique se `config.js` foi gerado corretamente
 - Confira as credenciais no painel do Supabase
 - Abra o console do navegador (F12) para ver erros
 

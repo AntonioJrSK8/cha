@@ -41,7 +41,7 @@ Thumbs.db
 .env.local
 
 # Configurações sensíveis
-config.js
+#config.js
 .env
 .env.local
 CREDENCIAIS-SUPABASE.md

@@ -1,6 +1,9 @@
 /**
  * Script Node.js para gerar config.js a partir do arquivo .env
  * Execute: node build-config.js
+ * 
+ * Este script lê as variáveis do arquivo .env e gera o config.js
+ * que será usado pelo database.js
  */
 
 const fs = require('fs');
@@ -46,7 +49,7 @@ function loadEnvFile() {
     return env;
 }
 
-// Gera o arquivo config.js
+// Gera o arquivo config.js com as variáveis do .env
 function generateConfigFile(env) {
     const SUPABASE_URL = env.SUPABASE_URL || '';
     const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY || '';

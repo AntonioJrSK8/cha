@@ -6,7 +6,7 @@
  * 
  * Para alterar as configurações, edite o arquivo .env e execute: node build-config.js
  * 
- * Gerado em: 2025-12-29T19:01:20.159Z
+ * Gerado em: 2025-12-29T19:55:15.671Z
  */
 
 // ============================================
