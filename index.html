@@ -8,6 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Configurações do Supabase (defina suas credenciais aqui) -->
+    <script src="config.js"></script>
+    
     <!-- QRCode library - tentará carregar de múltiplos CDNs -->
     <script>
         // Tenta carregar QRCode de múltiplos CDNs
@@ -147,8 +154,9 @@
         </div>
     </div>
 
-    <!-- Módulo de banco de dados SQLite -->
+    <!-- Módulo de banco de dados Supabase -->
     <script src="database.js"></script>
+    <!-- Script principal -->
     <script src="script.js"></script>
 </body>
 </html>

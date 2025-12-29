@@ -6,18 +6,20 @@ const PIX_NAME = 'ANTONIO JUNIO'; // Nome que aparecerá no QR Code
 // Configuração de exibição do QR Code
 const SHOW_QRCODE = false; // Altere para false se não quiser exibir o QR Code
 
-// Sistema usa SQLite compartilhado via API REST (Node.js)
-// Todos os navegadores compartilham o mesmo banco de dados palpites.db
+// Sistema usa Supabase (PostgreSQL na nuvem)
+// Todos os navegadores compartilham o mesmo banco de dados via Supabase
+// 100% JavaScript - sem servidor Node.js necessário
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    // Inicializa conexão com API
+    // Inicializa conexão com Supabase
     try {
         await window.SQLiteDB.init();
-        console.log('✅ Sistema inicializado - usando API REST para banco compartilhado');
+        console.log('✅ Sistema inicializado - usando Supabase para banco compartilhado');
     } catch (error) {
-        console.error('❌ Erro ao conectar à API:', error);
-        alert('Erro ao conectar ao servidor. Certifique-se de que o servidor está rodando em http://localhost:3000');
+        console.error('❌ Erro ao conectar ao Supabase:', error);
+        const errorMsg = error.message || 'Erro desconhecido';
+        alert(`Erro ao conectar ao Supabase:\n\n${errorMsg}\n\nVerifique se config.js está configurado corretamente com suas credenciais do Supabase.`);
     }
     
     initializeForm();

@@ -8,8 +8,8 @@ Um site interativo e encantador para coletar palpites e mensagens carinhosas dur
 - **Visualização de Palpites**: Página dedicada para ver todos os palpites recebidos
 - **Estatísticas**: Contador de total de palpites e divisão por sexo
 - **Design Responsivo**: Funciona perfeitamente em celulares (ideal para acesso via QR Code)
-- **Banco de Dados SQLite Compartilhado**: Todos os navegadores compartilham o mesmo banco `palpites.db`
-- **API REST**: Endpoints para gerenciar palpites via servidor Node.js
+- **Banco de Dados Supabase**: Todos os navegadores compartilham o mesmo banco PostgreSQL na nuvem
+- **100% JavaScript**: Funciona completamente no navegador, sem necessidade de servidor
 - **Exportação**: Possibilidade de exportar os palpites em JSON para backup
 - **Música de Fundo**: Player integrado com a música "Aquarela" (com controles de play/pause)
 - **Gráfico Interativo**: Visualização da distribuição de palpites entre meninos e meninas
@@ -18,48 +18,56 @@ Um site interativo e encantador para coletar palpites e mensagens carinhosas dur
 
 ### Pré-requisitos
 
-- Node.js 14 ou superior instalado
 - Navegador moderno (Chrome, Firefox, Safari, Edge)
+- Conta no Supabase (gratuita)
 
-### Instalação e Execução
+### Configuração Inicial
 
-1. **Instale as dependências**:
-   ```bash
-   npm install
-   ```
+1. **Crie uma conta no Supabase**:
+   - Acesse [https://supabase.com](https://supabase.com)
+   - Crie um projeto gratuito
+   - Veja instruções detalhadas em `README-SUPABASE.md`
 
-2. **Inicie o servidor**:
-   ```bash
-   npm start
-   ```
+2. **Configure as credenciais**:
+   - Copie `config.js.example` para `config.js`
+   - Edite `config.js` com suas credenciais do Supabase
 
-3. **Acesse o site**:
-   ```
-   http://localhost:3000/index.html
-   ```
+3. **Crie a tabela no Supabase**:
+   - No SQL Editor do Supabase, execute o arquivo `supabase_schema.sql`
+   - Verifique se a tabela `palpites` foi criada
 
-O servidor iniciará na porta 3000 (ou na porta definida na variável de ambiente `PORT`).
+4. **Abra o site**:
+   - Abra `index.html` no navegador
+   - Ou hospede em qualquer servidor estático (GitHub Pages, Netlify, Vercel, etc.)
+
+### Hospedagem
+
+Você pode hospedar em qualquer servidor de arquivos estáticos:
+
+- **GitHub Pages**: Upload dos arquivos
+- **Netlify**: Drag and drop ou Git
+- **Vercel**: Conecte seu repositório
+- **Qualquer servidor HTTP**: Apache, Nginx, etc.
+
+**Importante**: Certifique-se de que `config.js` está configurado com suas credenciais do Supabase!
 
 ### Uso no Evento
 
-1. **Inicie o servidor** no computador principal
-2. **Obtenha o IP local** do computador (ex: `192.168.1.100`)
-3. **Acesse de qualquer dispositivo na mesma rede**:
-   ```
-   http://192.168.1.100:3000/index.html
-   ```
-4. **Compartilhe o QR Code** para facilitar o acesso
-5. **Todos os palpites** serão salvos no mesmo banco `palpites.db`
+1. **Configure o Supabase** (uma vez apenas)
+2. **Hospede o site** em qualquer lugar
+3. **Compartilhe o QR Code** para facilitar o acesso
+4. **Todos os palpites** serão salvos automaticamente no Supabase
+5. **Acesse de qualquer dispositivo** para ver os resultados em tempo real
 
 ## 📱 Acesso via QR Code
 
 Para usar em um evento físico:
 
-1. Configure o servidor em um computador na rede local
-2. Gere um QR Code apontando para `http://IP_DO_SERVIDOR:3000/index.html`
+1. Configure o Supabase e hospede o site
+2. Gere um QR Code apontando para a URL do site
 3. Imprima o QR Code e integre ao design da "Árvore dos Palpites"
 4. Os convidados escaneiam e preenchem o formulário
-5. Todos os dados são salvos no mesmo banco compartilhado
+5. Todos os dados são salvos automaticamente no Supabase
 
 ## 🎨 Personalização
 
@@ -114,36 +122,60 @@ Os palpites são armazenados no formato:
   - JavaScript (Vanilla)
   
 - **Backend**:
-  - Node.js
-  - Express.js
-  - better-sqlite3 (SQLite)
+  - Supabase (PostgreSQL na nuvem)
+  - Supabase JavaScript Client
 
 ## 💾 Banco de Dados
 
-- **Arquivo**: `palpites.db` (criado automaticamente)
-- **Localização**: Raiz do projeto
-- **Compartilhado**: Todos os navegadores usam o mesmo arquivo via API
-- **Persistência**: Os dados são salvos permanentemente no servidor
+- **Banco**: PostgreSQL (via Supabase)
+- **Tabela**: `palpites`
+- **Compartilhado**: Todos os navegadores usam o mesmo banco
+- **Persistência**: Dados salvos permanentemente na nuvem
+- **Gratuito**: Plano gratuito generoso do Supabase
 
-## 📝 Notas Importantes
+## 📝 Arquivos Importantes
 
-- ⚠️ **O servidor precisa estar rodando** para que o site funcione
-- 💾 O arquivo `palpites.db` contém todos os dados
-- 🔄 **Faça backup regular** do arquivo `palpites.db`
-- 🌐 Para acesso remoto, configure firewall/roteador adequadamente
-- 🔒 Para produção, adicione autenticação e HTTPS
+- `config.js` - **Configure suas credenciais do Supabase aqui** (não commitado)
+- `config.js.example` - Exemplo de configuração
+- `database.js` - Módulo de conexão com Supabase
+- `supabase_schema.sql` - Script para criar a tabela
+- `README-SUPABASE.md` - Guia completo de configuração do Supabase
+
+## 🔒 Segurança
+
+- **Row Level Security (RLS)**: Habilitado e configurado
+- **Leitura pública**: Qualquer um pode ler palpites
+- **Inserção pública**: Qualquer um pode adicionar palpites
+- **Chave anônima**: Usa apenas chave pública (segura para frontend)
 
 ## 📚 Documentação Adicional
 
-- `README-SERVIDOR.md` - Documentação detalhada do servidor e API
-- `README-JAVASCRIPT.md` - Documentação sobre a versão anterior (offline)
+- `README-SUPABASE.md` - Configuração detalhada do Supabase
+- `CREATE_DATABASE.md` - Informações sobre estrutura do banco (versão anterior)
 
-## 🔄 Migração
+## ⚠️ Notas Importantes
 
-Se você estava usando a versão anterior (100% JavaScript offline):
-- Os dados do IndexedDB não são migrados automaticamente
-- Você pode exportar os dados antigos manualmente
-- Os novos dados serão salvos no banco compartilhado `palpites.db`
+- ⚠️ **Configure `config.js`** antes de usar
+- 🔑 **Nunca commite** `config.js` com credenciais reais
+- 🌐 **Funciona em qualquer hospedagem** estática
+- 💰 **Gratuito** até ~500MB de dados (suficiente para milhares de palpites)
+- 🔄 **Dados compartilhados** em tempo real entre todos os dispositivos
+
+## 🐛 Troubleshooting
+
+### Site não conecta ao banco
+- Verifique se `config.js` está configurado corretamente
+- Confira as credenciais no painel do Supabase
+- Abra o console do navegador (F12) para ver erros
+
+### Erro "Invalid API key"
+- Certifique-se de usar a chave "anon public", não "service_role"
+- Verifique se copiou a chave completa (é muito longa)
+
+### Tabela não existe
+- Execute o script `supabase_schema.sql` no SQL Editor do Supabase
+
+Veja mais em `README-SUPABASE.md`.
 
 ## 💚 Feito com carinho
 

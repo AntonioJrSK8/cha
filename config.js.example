@@ -1,0 +1,15 @@
+/**
+ * Arquivo de exemplo de configuração do Supabase
+ * 
+ * INSTRUÇÕES:
+ * 1. Copie este arquivo: cp config.js.example config.js
+ * 2. Edite config.js com suas credenciais reais do Supabase
+ * 3. NUNCA commite config.js no Git (já está no .gitignore)
+ */
+
+// URL do seu projeto Supabase
+window.SUPABASE_URL = 'https://seu-projeto.supabase.co';
+
+// Chave pública anônima do Supabase
+window.SUPABASE_ANON_KEY = 'sua-chave-anon-aqui';
+
