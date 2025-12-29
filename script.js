@@ -6,18 +6,18 @@ const PIX_NAME = 'ANTONIO JUNIO'; // Nome que aparecerá no QR Code
 // Configuração de exibição do QR Code
 const SHOW_QRCODE = false; // Altere para false se não quiser exibir o QR Code
 
-// Sistema agora usa SQLite no navegador (100% JavaScript)
-// Não precisa mais de servidor Python ou API
+// Sistema usa SQLite compartilhado via API REST (Node.js)
+// Todos os navegadores compartilham o mesmo banco de dados palpites.db
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async function() {
-    // Inicializa SQLite
+    // Inicializa conexão com API
     try {
         await window.SQLiteDB.init();
-        console.log('✅ SQLite inicializado com sucesso');
+        console.log('✅ Sistema inicializado - usando API REST para banco compartilhado');
     } catch (error) {
-        console.error('❌ Erro ao inicializar SQLite:', error);
-        alert('Erro ao inicializar banco de dados. Recarregue a página.');
+        console.error('❌ Erro ao conectar à API:', error);
+        alert('Erro ao conectar ao servidor. Certifique-se de que o servidor está rodando em http://localhost:3000');
     }
     
     initializeForm();
@@ -143,18 +143,24 @@ async function savePalpite(palpite, isGanhador = false) {
     }
 }
 
-// Obtém todos os palpites do SQLite (100% JavaScript)
+// Obtém todos os palpites do SQLite compartilhado via API REST
 async function getPalpites() {
     try {
-        // Garante que SQLite está inicializado
-        await window.SQLiteDB.init();
+        const response = await fetch('/api/palpites', {
+            method: 'GET',
+            cache: 'no-cache'
+        });
         
-        // Busca no SQLite
-        const palpites = await window.SQLiteDB.getAllPalpites();
-        console.log(`✅ Carregados ${palpites.length} palpites do SQLite`);
+        if (!response.ok) {
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const palpites = data.palpites || [];
+        console.log(`✅ Carregados ${palpites.length} palpites do banco compartilhado`);
         return palpites;
     } catch (error) {
-        console.error('❌ Erro ao carregar palpites do SQLite:', error);
+        console.error('❌ Erro ao carregar palpites:', error);
         return [];
     }
 }
@@ -652,12 +658,8 @@ async function exportPalpites() {
         link.click();
         URL.revokeObjectURL(url);
         
-        // Opção 2: Também exportar o banco SQLite completo
-        try {
-            await window.SQLiteDB.exportDatabase();
-        } catch (e) {
-            console.log('Exportação do banco SQLite não disponível');
-        }
+        // O banco SQLite está no servidor, pode ser acessado via arquivo palpites.db
+        console.log('💾 Exportação JSON concluída. O banco SQLite está no servidor (palpites.db)');
     } catch (error) {
         console.error('Erro ao exportar palpites:', error);
         alert('Erro ao exportar palpites. Tente novamente.');
@@ -668,8 +670,15 @@ async function exportPalpites() {
 async function clearAllPalpites() {
     if (confirm('Tem certeza que deseja apagar todos os palpites? Esta ação não pode ser desfeita.')) {
         try {
-            await window.SQLiteDB.clearAllPalpites();
-            console.log('✅ Todos os palpites foram removidos do SQLite');
+            const response = await fetch('/api/palpites', {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+            
+            console.log('✅ Todos os palpites foram removidos do banco compartilhado');
             
             if (window.location.pathname.includes('palpites.html')) {
                 location.reload();

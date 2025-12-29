@@ -1,10 +1,11 @@
 // Função auxiliar para obter palpites (fallback se script.js não carregou)
 async function getPalpitesLocal() {
     try {
-        // Tenta usar SQLite primeiro
-        if (window.SQLiteDB) {
-            await window.SQLiteDB.init();
-            return await window.SQLiteDB.getAllPalpites();
+        // Tenta usar a API REST
+        const response = await fetch('/api/palpites');
+        if (response.ok) {
+            const data = await response.json();
+            return data.palpites || [];
         }
         return [];
     } catch (e) {

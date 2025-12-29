@@ -8,45 +8,58 @@ Um site interativo e encantador para coletar palpites e mensagens carinhosas dur
 - **Visualização de Palpites**: Página dedicada para ver todos os palpites recebidos
 - **Estatísticas**: Contador de total de palpites e divisão por sexo
 - **Design Responsivo**: Funciona perfeitamente em celulares (ideal para acesso via QR Code)
-- **Banco de Dados SQLite**: Todos os dados são salvos em banco de dados SQLite no servidor
-- **API REST**: Endpoints para gerenciar palpites (GET, POST)
+- **Banco de Dados SQLite Compartilhado**: Todos os navegadores compartilham o mesmo banco `palpites.db`
+- **API REST**: Endpoints para gerenciar palpites via servidor Node.js
 - **Exportação**: Possibilidade de exportar os palpites em JSON para backup
 - **Música de Fundo**: Player integrado com a música "Aquarela" (com controles de play/pause)
 - **Gráfico Interativo**: Visualização da distribuição de palpites entre meninos e meninas
 
 ## 🚀 Como Usar
 
-### Opção 1: Servidor Local (Recomendado)
+### Pré-requisitos
 
-1. **Inicie o servidor Python**:
-   - **Windows**: Clique duas vezes em `start-server.bat` ou execute `python server.py`
-   - **Linux/Mac**: Execute `./start-server.sh` ou `python3 server.py`
-   - **Manual**: Execute `python server.py` (ou `python3 server.py`)
+- Node.js 14 ou superior instalado
+- Navegador moderno (Chrome, Firefox, Safari, Edge)
 
-2. **Acesse o site**: Abra `http://localhost:8000` no navegador
+### Instalação e Execução
 
-3. **Para usar outra porta**: Execute `python server.py 3000` (substitua 3000 pela porta desejada)
+1. **Instale as dependências**:
+   ```bash
+   npm install
+   ```
 
-4. **Para parar o servidor**: Pressione `Ctrl+C` no terminal
+2. **Inicie o servidor**:
+   ```bash
+   npm start
+   ```
 
-### Opção 2: Abrir Diretamente
+3. **Acesse o site**:
+   ```
+   http://localhost:3000/index.html
+   ```
 
-1. **Acesse o site**: Abra `index.html` diretamente no navegador (funcionalidade limitada)
+O servidor iniciará na porta 3000 (ou na porta definida na variável de ambiente `PORT`).
 
 ### Uso no Evento
 
-1. **Compartilhe o QR Code**: Gere um QR Code apontando para a URL do servidor local
-2. **Colete Palpites**: Os convidados preenchem o formulário via celular
-3. **Visualize Resultados**: Acesse `palpites.html` para ver todos os palpites
+1. **Inicie o servidor** no computador principal
+2. **Obtenha o IP local** do computador (ex: `192.168.1.100`)
+3. **Acesse de qualquer dispositivo na mesma rede**:
+   ```
+   http://192.168.1.100:3000/index.html
+   ```
+4. **Compartilhe o QR Code** para facilitar o acesso
+5. **Todos os palpites** serão salvos no mesmo banco `palpites.db`
 
 ## 📱 Acesso via QR Code
 
 Para usar em um evento físico:
 
-1. Hospede o site em um servidor (GitHub Pages, Netlify, Vercel, etc.)
-2. Gere um QR Code apontando para a URL do site
+1. Configure o servidor em um computador na rede local
+2. Gere um QR Code apontando para `http://IP_DO_SERVIDOR:3000/index.html`
 3. Imprima o QR Code e integre ao design da "Árvore dos Palpites"
 4. Os convidados escaneiam e preenchem o formulário
+5. Todos os dados são salvos no mesmo banco compartilhado
 
 ## 🎨 Personalização
 
@@ -82,36 +95,56 @@ Os palpites são armazenados no formato:
 
 ```json
 {
-    "id": 1234567890,
+    "id": 1,
     "nome": "Nome do Convidado",
     "sexo": "menina" ou "menino",
     "sugestaoNome": "Nome sugerido (opcional)",
     "mensagem": "Mensagem carinhosa",
     "dataPalpite": "2024-01-15",
-    "dataRegistro": "2024-01-15T10:30:00.000Z"
+    "dataRegistro": "2024-01-15T10:30:00.000Z",
+    "ehGanhador": false
 }
 ```
 
 ## 🔧 Tecnologias Utilizadas
 
-- HTML5
-- CSS3 (com animações e gradientes)
-- JavaScript (Vanilla com Fetch API)
-- Python 3 (servidor HTTP)
-- SQLite (banco de dados)
-- Python 3 (servidor HTTP local)
+- **Frontend**:
+  - HTML5
+  - CSS3 (com animações e gradientes)
+  - JavaScript (Vanilla)
+  
+- **Backend**:
+  - Node.js
+  - Express.js
+  - better-sqlite3 (SQLite)
 
-## 📝 Notas
+## 💾 Banco de Dados
 
-- Os dados são armazenados em SQLite no servidor (arquivo `palpites.db`)
-- O banco de dados é criado automaticamente na primeira execução
-- Faça backup regular do arquivo `palpites.db` ou use a função de exportação
-- O design é totalmente responsivo e otimizado para mobile
-- O servidor precisa estar rodando para que o site funcione corretamente
+- **Arquivo**: `palpites.db` (criado automaticamente)
+- **Localização**: Raiz do projeto
+- **Compartilhado**: Todos os navegadores usam o mesmo arquivo via API
+- **Persistência**: Os dados são salvos permanentemente no servidor
+
+## 📝 Notas Importantes
+
+- ⚠️ **O servidor precisa estar rodando** para que o site funcione
+- 💾 O arquivo `palpites.db` contém todos os dados
+- 🔄 **Faça backup regular** do arquivo `palpites.db`
+- 🌐 Para acesso remoto, configure firewall/roteador adequadamente
+- 🔒 Para produção, adicione autenticação e HTTPS
+
+## 📚 Documentação Adicional
+
+- `README-SERVIDOR.md` - Documentação detalhada do servidor e API
+- `README-JAVASCRIPT.md` - Documentação sobre a versão anterior (offline)
+
+## 🔄 Migração
+
+Se você estava usando a versão anterior (100% JavaScript offline):
+- Os dados do IndexedDB não são migrados automaticamente
+- Você pode exportar os dados antigos manualmente
+- Os novos dados serão salvos no banco compartilhado `palpites.db`
 
 ## 💚 Feito com carinho
 
 Este projeto foi criado para tornar o momento do chá de revelação ainda mais especial e memorável!
-
-
-"# cha"  git init git add README.md git commit -m "first commit" git branch -M main git remote add origin https://github.com/AntonioJrSK8/cha.git git push -u origin main
