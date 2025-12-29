@@ -1,3 +1,0 @@
-# Dependências Python para Vercel
-# SQLite3 já está incluído no Python padrão
-
