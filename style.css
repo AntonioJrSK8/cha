@@ -457,6 +457,13 @@ body {
     border-bottom: 2px solid #e0e8d8;
 }
 
+.palpite-nome-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
 .palpite-nome {
     font-weight: 600;
     color: var(--primary-green);
@@ -478,6 +485,30 @@ body {
     }
     50% {
         transform: scale(1.15);
+    }
+}
+
+.legenda-premiado {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+    animation: legendaShine 3s ease-in-out infinite;
+    align-self: flex-start;
+}
+
+@keyframes legendaShine {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        box-shadow: 0 2px 12px rgba(255, 193, 7, 0.7);
     }
 }
 
