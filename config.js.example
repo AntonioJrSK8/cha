@@ -13,3 +13,5 @@ window.SUPABASE_URL = 'https://seu-projeto.supabase.co';
 // Chave pública anônima do Supabase
 window.SUPABASE_ANON_KEY = 'sua-chave-anon-aqui';
 
+
+

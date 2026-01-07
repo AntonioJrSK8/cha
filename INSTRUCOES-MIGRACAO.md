@@ -64,3 +64,5 @@ A coluna `eh_ganhador` deve mostrar `0` ou `1`, não `true`/`false`.
 - O código JavaScript já está configurado para usar 0/1
 - As consultas foram atualizadas para usar `= 1` ao invés de `= true`
 
+
+

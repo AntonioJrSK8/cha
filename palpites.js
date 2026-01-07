@@ -95,10 +95,17 @@ function createPalpiteCard(palpite) {
     const sexoText = palpite.sexo === 'menina' ? 'Menina' : 'Menino';
 
     const dataFormatada = formatDate(palpite.dataPalpite);
+    
+    // Verifica se é ganhador e adiciona ícone de taça
+    const isGanhador = palpite.ehGanhador === true || palpite.ehGanhador === 1 || palpite.eh_ganhador === 1;
+    const trofeuIcon = isGanhador ? '<span class="trofeu-icon" title="Ganhador do Prêmio">🏆</span>' : '';
 
     card.innerHTML = `
         <div class="palpite-header">
-            <span class="palpite-nome">${escapeHtml(palpite.nome)}</span>
+            <span class="palpite-nome">
+                ${escapeHtml(palpite.nome)}
+                ${trofeuIcon}
+            </span>
             <span class="palpite-sexo" title="${sexoText}">${sexoIcon}</span>
         </div>
         ${palpite.sugestaoNome ? `

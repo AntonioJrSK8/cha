@@ -21,3 +21,5 @@ ALTER TABLE public.palpites
 ALTER TABLE public.palpites 
     ALTER COLUMN eh_ganhador SET DEFAULT 0;
 
+
+

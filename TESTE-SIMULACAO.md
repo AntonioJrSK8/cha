@@ -310,3 +310,5 @@ Ao adicionar palpite:
 
 Todos os arquivos estão configurados corretamente. O único requisito restante é criar a tabela no Supabase executando `supabase_schema.sql`.
 
+
+

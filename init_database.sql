@@ -26,3 +26,5 @@ CREATE INDEX idx_eh_ganhador ON palpites(eh_ganhador);
 -- Verifica se a tabela foi criada corretamente
 SELECT name FROM sqlite_master WHERE type='table' AND name='palpites';
 
+
+
